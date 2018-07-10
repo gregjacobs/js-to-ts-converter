@@ -14,11 +14,14 @@
 	"dependencies": {
 		"@types/glob": "^5.0.35",
 		"argparse": "^1.0.10",
+		"fs-extra": "^6.0.1",
+		"ts-simple-ast": "^12.5.1",
 		"typescript": "^2.9.2",
 		"vinyl-file": "^3.0.0"
 	},
 	"devDependencies": {
 		"@types/chai": "^4.1.4",
+		"@types/fs-extra": "^5.0.4",
 		"@types/mocha": "^5.2.4",
 		"@types/node": "^10.5.2",
 		"@types/vinyl": "^2.0.2",

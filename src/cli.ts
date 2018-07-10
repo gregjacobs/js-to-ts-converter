@@ -1,7 +1,8 @@
 import * as path from "path";
 import * as fs from 'fs';
 
-import { readJsFiles } from "./read-js-files";
+import Project from "ts-simple-ast";
+import { parseClasses } from "./parse-classes";
 
 const ArgumentParser = require('argparse').ArgumentParser;
 
@@ -18,9 +19,6 @@ parser.addArgument( 'directory', {
 const args = parser.parseArgs();
 const absolutePath = path.resolve( args.directory );
 
-console.log( 'absolute path', absolutePath );
-
-
 if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 	console.error( `${absolutePath} is not a directory. Please provide a directory` );
 	process.exit( 1 );
@@ -29,15 +27,19 @@ if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 
 // 1. Read all .js files, storing path and text
 // 2. Parse all .js files for ES6 classes. Create tree (or graph) of JsClass
-//    nodes
-// 3. Walk down tree, and replace source text of classes with field-added
-//    versions
+//    nodes, which each hold a set of the properties used in the class, and
+//    a reference to its parent in order to not re-declare the same fields as
+//    the parent.
+// 3. Go through each source file again, replace source text of classes with
+//    field-added versions
 // 4. Write out all .js files as .ts files
 // 5. Delete all .js files
 
-readJsFiles( absolutePath )
-	.then( sourceFilesCollection => console.log( sourceFilesCollection ) )
-	.catch( err => {
-		console.error( "An error occurred: ", err );
-		process.exit( 1 );
-	} );
+const tsAstProject = new Project();
+tsAstProject.addExistingSourceFiles( `${absolutePath}/**/*.js` );
+
+const sourceFiles = tsAstProject.getSourceFiles();
+//console.log( sourceFiles );
+
+const classesCollection = parseClasses( tsAstProject );
+console.log( classesCollection );
