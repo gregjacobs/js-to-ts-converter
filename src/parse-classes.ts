@@ -23,9 +23,10 @@ export function parseClasses( tsAstProject: Project ): JsClassesCollection {
 		const fileClasses = file.getClasses();
 
 		return fileClasses.map( fileClass => {
+			const className = fileClass.getName();
 			const properties = parseProperties( fileClass );
 
-			return new JsClass( file, properties );
+			return new JsClass( file, className, properties );
 		} );
 	}
 

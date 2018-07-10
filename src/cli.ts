@@ -43,3 +43,4 @@ const sourceFiles = tsAstProject.getSourceFiles();
 
 const classesCollection = parseClasses( tsAstProject );
 console.log( classesCollection );
+
