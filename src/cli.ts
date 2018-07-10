@@ -1,5 +1,6 @@
 import * as path from "path";
 import * as fs from 'fs';
+import * as util from "util";
 
 import Project from "ts-simple-ast";
 import { parseClasses } from "./parse-classes";
@@ -42,5 +43,5 @@ const sourceFiles = tsAstProject.getSourceFiles();
 //console.log( sourceFiles );
 
 const classesCollection = parseClasses( tsAstProject );
-console.log( classesCollection );
+//console.log( util.inspect( classesCollection, { depth: 4 } ) );
 

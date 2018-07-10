@@ -1,12 +1,12 @@
 export class MyClass {
 
 	constructor() {
-		this.something = 42;
+		this.myClassProp1 = 42;
 	}
 
 	doSomething() {
-		this.something2 = 78;
-		console.log( this.something3 );
+		this.myClassProp2 = 78;
+		console.log( this.myClassProp3 );
 	}
 
 }
