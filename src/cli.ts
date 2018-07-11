@@ -3,7 +3,8 @@ import * as fs from 'fs';
 import * as util from "util";
 
 import Project from "ts-simple-ast";
-import { parseClasses } from "./parse-classes";
+import { parseJsClasses } from "./parse-js-classes";
+import { correctJsProperties } from "./correct-js-properties";
 
 const ArgumentParser = require('argparse').ArgumentParser;
 
@@ -42,6 +43,17 @@ tsAstProject.addExistingSourceFiles( `${absolutePath}/**/*.js` );
 const sourceFiles = tsAstProject.getSourceFiles();
 //console.log( sourceFiles );
 
-const classesCollection = parseClasses( tsAstProject );
-//console.log( util.inspect( classesCollection, { depth: 4 } ) );
+const jsClassesGraph = parseJsClasses( tsAstProject );
+//console.log( util.inspect( jsClassesGraph, { depth: 3 } ) );
 
+const propertiesCorrectedJsClasses = correctJsProperties( jsClassesGraph );
+console.log( util.inspect( propertiesCorrectedJsClasses, { depth: 3 } ) );
+
+// Ok, now I have all of the JS classes, the properties that they access, and
+// references to their superclasses/files. Now:
+// 1. Need to convert these into a list of TypeScriptClasses which have the
+//    appropriate properties per class.
+// 2. Then, need to go through every TypeScriptClass and rewrite the class inside
+//    the source file to add the field definitions.
+// 3. Finally, rename the files to .ts (probably copy + delete), and save them
+//    to disk

@@ -13,8 +13,10 @@
 	},
 	"dependencies": {
 		"@types/glob": "^5.0.35",
+		"@types/graphlib": "^2.1.4",
 		"argparse": "^1.0.10",
 		"fs-extra": "^6.0.1",
+		"graphlib": "^2.1.5",
 		"ts-simple-ast": "^12.5.1",
 		"typescript": "^2.9.2",
 		"vinyl-file": "^3.0.0"
