@@ -11,11 +11,12 @@ describe( 'convert()', () => {
 
 		const convertedProject = convert( tsAstProject );
 		expect( convertedProject.getSourceFiles().length )
-			.to.equal( 5 );
+			.to.equal( 6 );
 
 
 		const myClassFile = convertedProject.getSourceFileOrThrow( `${__dirname}/fixture/my-class.ts` );
 		const mySubClassFile = convertedProject.getSourceFileOrThrow( `${__dirname}/fixture/my-sub-class.ts` );
+		const defaultExportClassFile = convertedProject.getSourceFileOrThrow( `${__dirname}/fixture/default-export-class.ts` );
 		const anotherSubClassFile = convertedProject.getSourceFileOrThrow( `${__dirname}/fixture/another-sub-class.ts` );
 		const mySuperClassFile = convertedProject.getSourceFileOrThrow( `${__dirname}/fixture/my-super-class.ts` );
 		const twoClassesFile = convertedProject.getSourceFileOrThrow( `${__dirname}/fixture/two-classes.ts` );
@@ -54,14 +55,27 @@ describe( 'convert()', () => {
 			}
 		`.trim().replace( /^\t{3}/gm, '' ) );
 
-		expect( anotherSubClassFile.getFullText() ).to.equal( `
-			import { MyClass } from "./my-class";
+		expect( defaultExportClassFile.getFullText() ).to.equal( `
+			class DefaultExportClass {
+			    public defaultExportClassProp: any;
 
-			export class AnotherSubClass extends MyClass {
+				constructor() {
+					this.defaultExportClassProp = 1;
+				}
+			
+			}
+			
+			export default DefaultExportClass;
+		`.trim().replace( /^\t{3}/gm, '' ) );
+
+		expect( anotherSubClassFile.getFullText() ).to.equal( `
+			import DefaultExportClass from "./default-export-class";
+
+			export class AnotherSubClass extends DefaultExportClass {
 			    public anotherSubClassProp: any;
 
 				constructor() {
-					this.myClassProp1 = 45;  // from superclass
+					this.defaultExportClassProp = 45;  // from superclass
 					this.anotherSubClassProp = 10;
 				}
 			}

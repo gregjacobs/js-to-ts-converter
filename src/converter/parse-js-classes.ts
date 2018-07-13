@@ -113,9 +113,14 @@ function findImportPathForIdentifier(
 	const importWithIdentifier = sourceFile
 		.getImportDeclarations()
 		.find( ( importDeclaration: ImportDeclaration ) => {
-			return importDeclaration.getNamedImports()
+			const hasNamedImport = importDeclaration.getNamedImports()
 				.map( ( namedImport: ImportSpecifier ) => namedImport.getName() )
 				.includes( identifier );
+
+			const defaultImport = importDeclaration.getDefaultImport();
+			const hasDefaultImport = !!defaultImport && defaultImport.getText() === identifier;
+
+			return hasNamedImport || hasDefaultImport;
 		} );
 
 	if( importWithIdentifier ) {

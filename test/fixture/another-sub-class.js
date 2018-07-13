@@ -1,8 +1,8 @@
-import { MyClass } from "./my-class";
+import DefaultExportClass from "./default-export-class";
 
-export class AnotherSubClass extends MyClass {
+export class AnotherSubClass extends DefaultExportClass {
 	constructor() {
-		this.myClassProp1 = 45;  // from superclass
+		this.defaultExportClassProp = 45;  // from superclass
 		this.anotherSubClassProp = 10;
 	}
 }
