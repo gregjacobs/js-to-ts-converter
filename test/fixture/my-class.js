@@ -1,6 +1,9 @@
-export class MyClass {
+import { MySuperClass } from './my-super-class';
+
+export class MyClass extends MySuperClass {
 
 	constructor() {
+		this.mySuperClassProp = 99;
 		this.myClassProp1 = 42;
 	}
 
