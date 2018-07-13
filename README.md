@@ -74,5 +74,5 @@ npm run cli path/to/your/folder/with/js/files
 Run Tests:
 
 ```
-yarn test
+npm test
 ```
