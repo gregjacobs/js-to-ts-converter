@@ -47,7 +47,13 @@ const jsClassesGraph = parseJsClasses( tsAstProject );
 //console.log( util.inspect( jsClassesGraph, { depth: 3 } ) );
 
 const propertiesCorrectedJsClasses = correctJsProperties( jsClassesGraph );
-console.log( util.inspect( propertiesCorrectedJsClasses, { depth: 3 } ) );
+propertiesCorrectedJsClasses.forEach( jsClass => {
+	console.log( jsClass.path );
+	console.log( jsClass.name );
+	console.log( jsClass.properties );
+	console.log( '' );
+} );
+//console.log( util.inspect( propertiesCorrectedJsClasses, { depth: 3 } ) );
 
 // Ok, now I have all of the JS classes, the properties that they access, and
 // references to their superclasses/files. Now:

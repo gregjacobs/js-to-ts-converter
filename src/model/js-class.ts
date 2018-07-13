@@ -24,6 +24,25 @@ export class JsClass {
 		this.properties = cfg.properties;
 	}
 
-	public get path() { return this.sourceFile.getFilePath(); }
+	/**
+	 * String identifier for the JsClass which is a combination of its file path
+	 * and class name. Used to store JsClass nodes on a graphlib Graph.
+	 */
+	public get id(): string {
+		return `${this.path}_${this.name}`;
+	}
+
+	/**
+	 * Retrieves the ID of the superclass JsClass instance, if the JsClass has
+	 * one. If not, returns undefined.
+	 */
+	public get superclassId(): string | undefined {
+		return this.superclass && `${this.superclassPath}_${this.superclass}`;
+	}
+
+	public get path(): string {
+		return this.sourceFile.getFilePath();
+	}
+
 
 }
