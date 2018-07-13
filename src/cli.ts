@@ -1,8 +1,7 @@
 import * as path from "path";
 import * as fs from 'fs';
-import * as util from "util";
 
-import Project from "ts-simple-ast";
+import Project, { PropertyDeclarationStructure, Scope } from "ts-simple-ast";
 import { parseJsClasses } from "./parse-js-classes";
 import { correctJsProperties } from "./correct-js-properties";
 
@@ -26,40 +25,58 @@ if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 	process.exit( 1 );
 }
 
-
-// 1. Read all .js files, storing path and text
-// 2. Parse all .js files for ES6 classes. Create tree (or graph) of JsClass
-//    nodes, which each hold a set of the properties used in the class, and
-//    a reference to its parent in order to not re-declare the same fields as
-//    the parent.
-// 3. Go through each source file again, replace source text of classes with
-//    field-added versions
-// 4. Write out all .js files as .ts files
-// 5. Delete all .js files
-
 const tsAstProject = new Project();
 tsAstProject.addExistingSourceFiles( `${absolutePath}/**/*.js` );
 
-const sourceFiles = tsAstProject.getSourceFiles();
-//console.log( sourceFiles );
-
-const jsClassesGraph = parseJsClasses( tsAstProject );
-//console.log( util.inspect( jsClassesGraph, { depth: 3 } ) );
-
-const propertiesCorrectedJsClasses = correctJsProperties( jsClassesGraph );
-propertiesCorrectedJsClasses.forEach( jsClass => {
-	console.log( jsClass.path );
-	console.log( jsClass.name );
-	console.log( jsClass.properties );
-	console.log( '' );
+console.log( 'Processing the following source files for JS classes:' );
+tsAstProject.getSourceFiles().forEach( sf => {
+	console.log( `  ${sf.getFilePath()}` );
 } );
-//console.log( util.inspect( propertiesCorrectedJsClasses, { depth: 3 } ) );
 
-// Ok, now I have all of the JS classes, the properties that they access, and
-// references to their superclasses/files. Now:
-// 1. Need to convert these into a list of TypeScriptClasses which have the
-//    appropriate properties per class.
-// 2. Then, need to go through every TypeScriptClass and rewrite the class inside
-//    the source file to add the field definitions.
-// 3. Finally, rename the files to .ts (probably copy + delete), and save them
-//    to disk
+// Parse the JS classes for all of the this.xyz properties that they use
+const jsClassesGraph = parseJsClasses( tsAstProject );
+
+// Correct the JS classes' properties for superclass/subclass relationships
+// (essentially remove properties from subclasses that are defined by their
+// superclasses)
+const propertiesCorrectedJsClasses = correctJsProperties( jsClassesGraph );
+
+// Fill in field definitions for each of the classes
+propertiesCorrectedJsClasses.forEach( jsClass => {
+	const sourceFile = tsAstProject.getSourceFileOrThrow( jsClass.path );
+
+	const classDeclaration = sourceFile.getClassOrThrow( jsClass.name! );
+	const jsClassProperties = jsClass.properties;
+
+	const propertyDeclarations = jsClassProperties.map( propertyName => {
+		return {
+			name: propertyName,
+			type: 'any',
+			scope: Scope.Public
+		} as PropertyDeclarationStructure;
+	} );
+
+	classDeclaration.insertProperties( 0, propertyDeclarations )
+} );
+
+
+// Rename .js files to .ts files
+tsAstProject.getSourceFiles().forEach( sourceFile => {
+	const dir = sourceFile.getDirectoryPath();
+	const basename = sourceFile.getBaseNameWithoutExtension();
+	sourceFile.move( `${dir}/${basename}.ts` );
+} );
+
+// Filter out any node_modules files that accidentally got included by an import.
+// We don't want to modify these when we save the project
+tsAstProject.getSourceFiles().forEach( sourceFile => {
+	if( sourceFile.getFilePath().includes( 'node_modules' ) ) {
+		tsAstProject.removeSourceFile( sourceFile );
+	}
+} );
+
+console.log( 'Outputting .ts files:' );
+tsAstProject.getSourceFiles().forEach( sf => {
+	console.log( `  ${sf.getFilePath()}` );
+} );
+tsAstProject.saveSync();
