@@ -60,7 +60,7 @@ to revert!
 
 Check out the repository or download the `.zip` file from GitHub.
 
-Install dependencies:
+Then:
 
 ```
 cd place/you/downloaded/or/cloned
