@@ -1,34 +1,29 @@
 {
 	"name": "js-to-ts-converter",
 	"version": "1.0.0",
+	"private": true,
 	"description": "Small utility to convert ES6 classes to TypeScript by filling in property definitions",
-	"main": "dist/cli.js",
 	"repository": "https://github.com/gregjacobs/js-to-ts-converter.git",
 	"author": "Gregory Jacobs <greg@greg-jacobs.com>",
 	"license": "MIT",
 	"scripts": {
-		"build": "rm -rf ./dist && tsc",
-		"run-example": "yarn build && node dist/cli.js test/fixture",
+		"cli": "ts-node src/cli.ts",
+		"run-example": "npm run cli test/fixture",
 		"test": "mocha --require ts-node/register --watch-extensions ts \"test/**/*.spec.ts\""
 	},
 	"dependencies": {
-		"@types/glob": "^5.0.35",
 		"@types/graphlib": "^2.1.4",
+		"@types/node": "^10.5.2",
 		"argparse": "^1.0.10",
-		"fs-extra": "^6.0.1",
 		"graphlib": "^2.1.5",
 		"ts-simple-ast": "^12.5.1",
-		"typescript": "^2.9.2",
-		"vinyl-file": "^3.0.0"
+		"ts-node": "^7.0.0",
+		"typescript": "^2.9.2"
 	},
 	"devDependencies": {
 		"@types/chai": "^4.1.4",
-		"@types/fs-extra": "^5.0.4",
 		"@types/mocha": "^5.2.4",
-		"@types/node": "^10.5.2",
-		"@types/vinyl": "^2.0.2",
 		"chai": "^4.1.2",
-		"mocha": "^5.2.0",
-		"ts-node": "^7.0.0"
+		"mocha": "^5.2.0"
 	}
 }

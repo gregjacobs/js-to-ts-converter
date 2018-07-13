@@ -13,6 +13,15 @@ npm install -g yarn  # if you don't have yarn yet
 yarn
 ```
 
+Run the utility:
+
+```
+cd into/your/checkout/folder
+
+npm run cli path/to/your/js/folder
+```
+
+
 Run Tests:
 
 ```
