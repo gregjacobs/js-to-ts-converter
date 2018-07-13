@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import Project, { ClassDeclaration, ImportDeclaration, ImportSpecifier, SourceFile } from "ts-simple-ast";
-import { JsClass } from "./model/js-class";
+import { JsClass } from "../model/js-class";
 import * as path from "path";
 
 /**
