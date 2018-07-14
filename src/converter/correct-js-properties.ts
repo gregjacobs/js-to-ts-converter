@@ -79,7 +79,7 @@ export function correctJsProperties( jsClasses: JsClass[] ): JsClass[] {
 			superclassName: jsClass.superclassName,
 			superclassPath: jsClass.superclassPath,
 			methods: jsClass.methods,
-			properties: [ ...subclassOnlyProperties ]
+			properties: subclassOnlyProperties
 		} );
 
 		// Re-assign the new JsClass with the correct subclass properties back
