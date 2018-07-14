@@ -91,12 +91,31 @@ function parseSuperclass(
 	const heritage = fileClass.getExtends();
 	if( heritage ) {
 		superclassName = heritage.getExpression().getText();
-		superclassPath = findImportPathForIdentifier( file, superclassName ) || file.getFilePath();
+
+		// Confirm that the superclass is an identifier rather than an
+		// expression. It would be a bit much to try to understand expressions
+		// as a class's 'extends', so just ignore these for now.
+		// Example of ignored class extends:
+		//
+		//    class MyClass extends Mixin.mix( MixinClass1, MixinClass2 )
+		//
+		if( isValidIdentifier( superclassName ) ) {
+			superclassPath = findImportPathForIdentifier( file, superclassName ) || file.getFilePath();
+		} else {
+			superclassName = undefined;
+		}
 	}
 
 	return { superclassName, superclassPath };
 }
 
+
+/**
+ * Helper to determine if a string of text is a valid JavaScript identifier.
+ */
+function isValidIdentifier( text: string ) {
+	return /^[\w\$]+$/.test( text );
+}
 
 /**
  * Finds the import path for the given `identifier`.

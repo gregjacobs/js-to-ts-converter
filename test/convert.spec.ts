@@ -13,6 +13,13 @@ describe( 'convert()', () => {
 		runTest( `${__dirname}/fixture/superclass-subclass` );
 	} );
 
+	it( `should ignore expressions (i.e. non-identifiers) in the 'extends' 
+	     clause of a class (at least for the moment, this would be too much
+	     to parse and figure out - may support in the future)`,
+	() => {
+		runTest( `${__dirname}/fixture/expression-extends` );
+	} );
+
 } );
 
 
