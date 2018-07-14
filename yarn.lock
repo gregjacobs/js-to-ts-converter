@@ -28,6 +28,10 @@
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/@types/graphlib/-/graphlib-2.1.4.tgz#1b517f4111e07766555cf1bd9304bec9053b0240"
 
+"@types/lodash@^4.14.112":
+  version "4.14.112"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.112.tgz#4a8d8e5716b97a1ac01fe1931ad1e4cba719de5a"
+
 "@types/mocha@^5.2.4":
   version "5.2.4"
   resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-5.2.4.tgz#2f8fbdf95c69ebf82150a7864864010f186745bf"
@@ -594,7 +598,7 @@ kind-of@^6.0.0, kind-of@^6.0.2:
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-6.0.2.tgz#01146b36a6218e64e58f3a8d66de5d7fc6f6d051"
 
-lodash@^4.11.1:
+lodash@^4.11.1, lodash@^4.17.10:
   version "4.17.10"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.10.tgz#1b7793cf7259ea38fb3661d4d38b3260af8ae4e7"
 

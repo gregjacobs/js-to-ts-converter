@@ -3,10 +3,16 @@
 Small utility that I wrote to script converting a JS codebase which contains ES6 
 classes into TypeScript classes.
 
-Basically looks at any `this` property accessed by a JS class, and fills in the
-appropriate TypeScript class fields. 
+The utility does two things:
 
-Example .js source file (input):
+1. Renames `.js` files to `.ts`
+2. Adds property declarations to ES6 classes so that they are compilable by the
+   TypeScript compiler (see below).
+ 
+
+For #2 above, the utility basically looks at any `this` property accessed by a 
+JS class, and fills in the appropriate TypeScript property declarations. Example 
+`.js` source file (input):
 
 ```
 class Super {
@@ -46,7 +52,11 @@ class Sub extends Super {
 }
 ```
 
-The utility also renames .js files to .ts.
+
+The goal of this utility was to simply make the .js code compilable under the
+TypeScript compiler, so simply adding the property declarations typed as `any` 
+was the quickest option there. The utility may look at property initializers in 
+the future to determine a better type.
 
 
 ## Fair Warning
@@ -56,20 +66,69 @@ you are in a clean git (or other VCS) state before running it in case you need
 to revert!
 
 
-## Run the Utility
-
-Check out the repository or download the `.zip` file from GitHub.
-
-Then:
+## Running the Utility from the CLI
 
 ```
-cd place/you/downloaded/or/cloned
+npm install --global js-to-ts-converter
 
-npm install  # install dependencies
-
-npm run cli path/to/your/folder/with/js/files
+js-to-ts-converter path/to/js/files
 ```
 
+## Running the Utility from Node
+
+TypeScript: 
+
+```
+import { convertJsToTs, convertJsToTsSync } from 'js-to-ts-converter';
+
+
+// Async
+convertJsToTs( 'path/to/js/files' ).then( 
+    () => console.log( 'Done!' ),
+    ( err ) => console.log( 'Error: ', err );
+); 
+
+
+// Sync
+convertJsToTsSync( 'path/to/js/files' );
+console.log( 'Done!' );
+```
+
+JavaScript:
+
+```
+const { convertJsToTs, convertJsToTsSync } = require( 'js-to-ts-converter' );
+
+
+// Async
+convertJsToTs( 'path/to/js/files' ).then( 
+    () => console.log( 'Done!' ),
+    ( err ) => console.log( 'Error: ', err );
+); 
+
+
+// Sync
+convertJsToTsSync( 'path/to/js/files' );
+console.log( 'Done!' );
+```
+
+## Developing
+
+Make sure you have [Node.js](https://nodejs.org) installed. 
+
+Clone the git repo: 
+
+```
+git clone https://github.com/gregjacobs/js-to-ts-converter.git
+
+cd js-to-ts-converter
+```
+
+Install dependencies:
+
+```
+npm install
+```
 
 Run Tests:
 
