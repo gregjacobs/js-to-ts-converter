@@ -32,6 +32,8 @@ describe( 'convert()', () => {
 				constructor() {
 					this.mySuperClassProp = 99;
 					this.myClassProp1 = 42;
+					this.doSomething();  // should not become a property
+					this.mySuperclassMethod();  // should not become a property as it is a method in the superclass
 				}
 
 				doSomething() {
@@ -49,8 +51,10 @@ describe( 'convert()', () => {
 			    public mySubClassProp: any;
 
 				constructor() {
-					this.myClassProp1 = 43;  // from superclass
+					this.mySuperClassProp = 42;  // from superclass's superclass - should not be added as a prop
+					this.myClassProp1 = 43;  // from superclass - should not be added as a prop
 					this.mySubClassProp = 1;
+					this.mySuperclassMethod();  // should not be added as a property as it exists two superclasses up
 				}
 			}
 		`.trim().replace( /^\t{3}/gm, '' ) );
@@ -85,7 +89,11 @@ describe( 'convert()', () => {
 			export class MySuperClass {
 			    public mySuperClassProp: any;
 
-				someMethod() {
+				constructor() {
+					this.mySuperclassMethod();  // should not be added as a property
+				}
+
+				mySuperclassMethod() {
 					this.mySuperClassProp = 10;
 				}
 

@@ -1,7 +1,8 @@
 import * as ts from 'typescript';
-import Project, { ClassDeclaration, ImportDeclaration, ImportSpecifier, SourceFile } from "ts-simple-ast";
+import Project, { ClassDeclaration, ImportDeclaration, ImportSpecifier, MethodDeclaration, SourceFile } from "ts-simple-ast";
 import { JsClass } from "../model/js-class";
 import * as path from "path";
+import * as _ from 'lodash';
 
 /**
  * Parses the classes out of each .js file in the SourceFilesCollection, and
@@ -53,14 +54,18 @@ export function parseJsClasses( tsAstProject: Project ): JsClass[] {
 function parseFileClasses( sourceFile: SourceFile ): JsClass[] {
 	return sourceFile.getClasses().map( fileClass => {
 		const className = fileClass.getName();
-		const { superclass, superclassPath } = parseSuperclass( sourceFile, fileClass );
-		const properties = parseProperties( fileClass );
+		const { superclassName, superclassPath } = parseSuperclass( sourceFile, fileClass );
+		const methods = parseMethods( fileClass );
+
+		const propertyAccesses = parsePropertyAccesses( fileClass );
+		const properties = _.difference( propertyAccesses, methods );
 
 		return new JsClass( {
-			sourceFile,
+			path: sourceFile.getFilePath(),
 			name: className,
-			superclass,
+			superclassName,
 			superclassPath,
+			methods,
 			properties
 		} );
 	} );
@@ -77,19 +82,19 @@ function parseSuperclass(
 	file: SourceFile,
 	fileClass: ClassDeclaration
 ): {
-	superclass: string | undefined;
+	superclassName: string | undefined;
 	superclassPath: string | undefined;
 } {
-	let superclass: string | undefined;
+	let superclassName: string | undefined;
 	let superclassPath: string | undefined;
 
 	const heritage = fileClass.getExtends();
 	if( heritage ) {
-		superclass = heritage.getExpression().getText();
-		superclassPath = findImportPathForIdentifier( file, superclass ) || file.getFilePath();
+		superclassName = heritage.getExpression().getText();
+		superclassPath = findImportPathForIdentifier( file, superclassName ) || file.getFilePath();
 	}
 
-	return { superclass, superclassPath };
+	return { superclassName, superclassPath };
 }
 
 
@@ -128,11 +133,21 @@ function findImportPathForIdentifier(
 
 		// Return absolute path to the module, based on the source file that the
 		// import was found
-		return path.resolve( sourceFile.getDirectory().getPath(), moduleSpecifier + '.js' );
+		const importPath = path.resolve( sourceFile.getDirectory().getPath(), moduleSpecifier + '.js' );
+		return importPath.replace( /\\/g, '/' );  // normalize to forward slashes for windows to be consistent with ts-simple-ast
 
 	} else {
 		return null;
 	}
+}
+
+
+/**
+ * Parses the method names from the class.
+ */
+function parseMethods( fileClass: ClassDeclaration ): string[] {
+	return fileClass.getMethods()
+		.map( ( method: MethodDeclaration ) => method.getName() );
 }
 
 
@@ -149,7 +164,7 @@ function findImportPathForIdentifier(
  *
  *     [ 'something', 'something2', 'something3' ]
  */
-function parseProperties( fileClass: ClassDeclaration ): string[] {
+function parsePropertyAccesses( fileClass: ClassDeclaration ): string[] {
 	const thisProps = fileClass
 		.getDescendantsOfKind( ts.SyntaxKind.PropertyAccessExpression )
 		.filter( prop => prop.getExpression().getKind() === ts.SyntaxKind.ThisKeyword );

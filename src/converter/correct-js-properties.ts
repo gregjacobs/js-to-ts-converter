@@ -47,20 +47,22 @@ export function correctJsProperties( jsClasses: JsClass[] ): JsClass[] {
 	// subclass-specific properties
 	superclassToSubclassOrder.forEach( jsClassId => {
 		const jsClass = jsClassHierarchyGraph.node( jsClassId ) as JsClass;
-		const superclassJsClass = jsClass.superclassId && jsClassHierarchyGraph.node( jsClass.superclassId ) as JsClass;
-
 		const subclassOnlyProperties = new Set<string>( jsClass.properties );
-		if( superclassJsClass ) {
-			superclassJsClass.properties.forEach( ( superclassProp: string ) => {
+
+		const superclasses = getSuperclasses( jsClass );
+		superclasses.forEach( ( superclass: JsClass ) => {
+			// Filter out both properties and methods from each superclass
+			superclass.members.forEach( ( superclassProp: string ) => {
 				subclassOnlyProperties.delete( superclassProp );
 			} );
-		}
+		} );
 
 		const newJsClass = new JsClass( {
-			sourceFile: jsClass.sourceFile,
+			path: jsClass.path,
 			name: jsClass.name,
-			superclass: jsClass.superclass,
+			superclassName: jsClass.superclassName,
 			superclassPath: jsClass.superclassPath,
+			methods: jsClass.methods,
 			properties: [ ...subclassOnlyProperties ]
 		} );
 
@@ -75,4 +77,17 @@ export function correctJsProperties( jsClasses: JsClass[] ): JsClass[] {
 	// superclass/subclasses
 	return jsClassHierarchyGraph.nodes()
 		.map( jsClassId => jsClassHierarchyGraph.node( jsClassId ) as JsClass );
+
+
+	function getSuperclasses( jsClass: JsClass ) {
+		const superclasses: JsClass[] = [];
+
+		while( jsClass.superclassId ) {
+			const superclass = jsClassHierarchyGraph.node( jsClass.superclassId ) as JsClass;
+			superclasses.push( superclass );
+
+			jsClass = superclass;
+		}
+		return superclasses;
+	}
 }

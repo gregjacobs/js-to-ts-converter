@@ -1,26 +1,29 @@
-import { SourceFile } from "ts-simple-ast";
+import * as _ from 'lodash';
 
 /**
  * Represents a JavaScript class found in a source file.
  */
 export class JsClass {
-	public readonly sourceFile: SourceFile;
+	public readonly path: string;
 	public readonly name: string | undefined;             // will be undefined for a default export class
-	public readonly superclass: string | undefined;       // undefined if there is no superclass
+	public readonly superclassName: string | undefined;       // undefined if there is no superclass
 	public readonly superclassPath: string | undefined;   // undefined if there is no superclass
+	public readonly methods: string[];
 	public readonly properties: string[];
 
 	constructor( cfg: {
-		sourceFile: SourceFile;
+		path: string;
 		name: string | undefined;
-		superclass: string | undefined;
+		superclassName: string | undefined;
 		superclassPath: string | undefined;
+		methods: string[];
 		properties: string[];
 	} ) {
-		this.sourceFile = cfg.sourceFile;
+		this.path = cfg.path;
 		this.name = cfg.name;
-		this.superclass = cfg.superclass;
+		this.superclassName = cfg.superclassName;
 		this.superclassPath = cfg.superclassPath;
+		this.methods = cfg.methods;
 		this.properties = cfg.properties;
 	}
 
@@ -37,12 +40,15 @@ export class JsClass {
 	 * one. If not, returns undefined.
 	 */
 	public get superclassId(): string | undefined {
-		return this.superclass && `${this.superclassPath}_${this.superclass}`;
+		return this.superclassName && `${this.superclassPath}_${this.superclassName}`;
 	}
 
-	public get path(): string {
-		return this.sourceFile.getFilePath();
-	}
 
+	/**
+	 * Retrieves the array of all member names: both properties and methods.
+	 */
+	public get members(): string[] {
+		return _.uniq( this.methods.concat( this.properties ) );
+	}
 
 }
