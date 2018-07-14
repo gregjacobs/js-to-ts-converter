@@ -11,8 +11,8 @@ The utility does two things:
  
 
 For #2 above, the utility basically looks at any `this` property accessed by a 
-JS class, and fills in the appropriate TypeScript property declarations. Example 
-`.js` source file (input):
+JS class, and fills in the appropriate TypeScript property declarations. Take 
+this `.js` input source file as an example:
 
 ```
 class Super {
@@ -30,7 +30,7 @@ class Sub extends Super {
 ```
 
 
-Replaced with .ts file:
+The above JS classes are replaced with the following TS classes:
 
 ```
 class Super {
@@ -53,7 +53,7 @@ class Sub extends Super {
 ```
 
 
-The goal of this utility was to simply make the .js code compilable under the
+The goal of this utility was to simply make the `.js` code compilable under the
 TypeScript compiler, so simply adding the property declarations typed as `any` 
 was the quickest option there. The utility may look at property initializers in 
 the future to determine a better type.
