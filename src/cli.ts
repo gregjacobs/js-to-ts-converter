@@ -41,6 +41,7 @@ console.log( 'Processing the following source files:' );
 printSourceFilesList( tsAstProject, '  ' );
 
 // Convert
+console.log( 'Converting source files. This may take a few minutes depending on how many files are being converted...' );
 const convertedTsAstProject = convert( tsAstProject );
 
 // Print output files

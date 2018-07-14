@@ -1,4 +1,4 @@
-import Project, { PropertyDeclarationStructure, Scope } from "ts-simple-ast";
+import Project, { ClassInstancePropertyTypes, PropertyDeclaration, PropertyDeclarationStructure, Scope } from "ts-simple-ast";
 import { correctJsProperties } from "./correct-js-properties";
 import { parseJsClasses } from "./parse-js-classes";
 
@@ -18,7 +18,22 @@ export function convert( tsAstProject: Project ): Project {
 		const classDeclaration = sourceFile.getClassOrThrow( jsClass.name! );
 		const jsClassProperties = jsClass.properties;
 
-		const propertyDeclarations = jsClassProperties.map( propertyName => {
+		// If the utility was run against a TypeScript codebase, we should not
+		// fill in property declarations for properties that are already
+		// declared in the class. However, we *should* fill in any missing
+		// declarations. Removing any already-declared declarations from the
+		// jsClassProperties.
+		const currentPropertyDeclarations = classDeclaration.getInstanceProperties()
+			.reduce( ( props: Set<string>, prop: ClassInstancePropertyTypes ) => {
+				const propName = prop.getName();
+				return propName ? props.add( propName ) : props;
+			}, new Set<string>() );
+
+		const undeclaredProperties = [ ...jsClassProperties ]
+			.filter( ( propName: string ) => !currentPropertyDeclarations.has( propName ) );
+
+		// Add all currently-undeclared properties
+		const propertyDeclarations = undeclaredProperties.map( propertyName => {
 			return {
 				name: propertyName,
 				type: 'any',

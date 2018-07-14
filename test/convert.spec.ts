@@ -1,7 +1,6 @@
 import { expect } from 'chai';
 import { createTsAstProject } from "../src/create-ts-ast-project";
 import { convert } from "../src/converter/convert";
-import * as fs from 'fs';
 import { SourceFile } from "ts-simple-ast";
 
 describe( 'convert()', () => {
@@ -13,11 +12,20 @@ describe( 'convert()', () => {
 		runTest( `${__dirname}/fixture/superclass-subclass` );
 	} );
 
+
 	it( `should ignore expressions (i.e. non-identifiers) in the 'extends' 
 	     clause of a class (at least for the moment, this would be too much
 	     to parse and figure out - may support in the future)`,
 	() => {
 		runTest( `${__dirname}/fixture/expression-extends` );
+	} );
+
+
+	it( `should not fill in property declarations for properties that are already
+	     declared (such as if the utility is run against a typescript codebase),
+	     but should fill in any missing properties that aren ot declared`,
+	() => {
+		runTest( `${__dirname}/fixture/typescript-class` );
 	} );
 
 } );

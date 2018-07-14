@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import { union } from "../utils/set-utils";
 
 /**
  * Represents a JavaScript class found in a source file.
@@ -8,16 +8,17 @@ export class JsClass {
 	public readonly name: string | undefined;             // will be undefined for a default export class
 	public readonly superclassName: string | undefined;       // undefined if there is no superclass
 	public readonly superclassPath: string | undefined;   // undefined if there is no superclass
-	public readonly methods: string[];
-	public readonly properties: string[];
+	public readonly methods: Set<string>;
+	public readonly properties: Set<string>;
+	public readonly members: Set<string>;  // a union of the methods and properties Sets
 
 	constructor( cfg: {
 		path: string;
 		name: string | undefined;
 		superclassName: string | undefined;
 		superclassPath: string | undefined;
-		methods: string[];
-		properties: string[];
+		methods: Set<string>;
+		properties: Set<string>;
 	} ) {
 		this.path = cfg.path;
 		this.name = cfg.name;
@@ -25,6 +26,8 @@ export class JsClass {
 		this.superclassPath = cfg.superclassPath;
 		this.methods = cfg.methods;
 		this.properties = cfg.properties;
+
+		this.members = union( this.methods, this.properties );
 	}
 
 	/**
@@ -41,14 +44,6 @@ export class JsClass {
 	 */
 	public get superclassId(): string | undefined {
 		return this.superclassName && `${this.superclassPath}_${this.superclassName}`;
-	}
-
-
-	/**
-	 * Retrieves the array of all member names: both properties and methods.
-	 */
-	public get members(): string[] {
-		return _.uniq( this.methods.concat( this.properties ) );
 	}
 
 }

@@ -1,8 +1,9 @@
 import * as ts from 'typescript';
-import Project, { ClassDeclaration, ImportDeclaration, ImportSpecifier, MethodDeclaration, SourceFile } from "ts-simple-ast";
+import Project, { ClassDeclaration, ClassInstancePropertyTypes, ImportDeclaration, ImportSpecifier, MethodDeclaration, PropertyAccessExpression, SourceFile } from "ts-simple-ast";
 import { JsClass } from "../model/js-class";
 import * as path from "path";
 import * as _ from 'lodash';
+import { difference, union } from "../utils/set-utils";
 
 /**
  * Parses the classes out of each .js file in the SourceFilesCollection, and
@@ -57,8 +58,11 @@ function parseFileClasses( sourceFile: SourceFile ): JsClass[] {
 		const { superclassName, superclassPath } = parseSuperclass( sourceFile, fileClass );
 		const methods = parseMethods( fileClass );
 
+		const existingPropertyDeclarations = parsePropertyDeclarations( fileClass );  // in case we are actually parsing a TypeScript class with existing declarations
 		const propertyAccesses = parsePropertyAccesses( fileClass );
-		const properties = _.difference( propertyAccesses, methods );
+		const combinedProperties = union( existingPropertyDeclarations, propertyAccesses );
+
+		const propertiesWithoutMethods = difference( combinedProperties, methods );  // remove any method names from this Set
 
 		return new JsClass( {
 			path: sourceFile.getFilePath(),
@@ -66,7 +70,7 @@ function parseFileClasses( sourceFile: SourceFile ): JsClass[] {
 			superclassName,
 			superclassPath,
 			methods,
-			properties
+			properties: propertiesWithoutMethods
 		} );
 	} );
 }
@@ -114,7 +118,7 @@ function parseSuperclass(
  * Helper to determine if a string of text is a valid JavaScript identifier.
  */
 function isValidIdentifier( text: string ) {
-	return /^[\w\$]+$/.test( text );
+	return /^[\w$]+$/.test( text );
 }
 
 /**
@@ -162,11 +166,27 @@ function findImportPathForIdentifier(
 
 
 /**
- * Parses the method names from the class.
+ * Parses the method names from the class into a Set of strings.
  */
-function parseMethods( fileClass: ClassDeclaration ): string[] {
+function parseMethods( fileClass: ClassDeclaration ): Set<string> {
 	return fileClass.getMethods()
-		.map( ( method: MethodDeclaration ) => method.getName() );
+		.reduce( ( methods: Set<string>, method: MethodDeclaration ) => {
+			return methods.add( method.getName() );
+		}, new Set<string>() );
+}
+
+
+/**
+ * In the case that the utility is actually parsing TypeScript classes with
+ * existing property declarations, we want to know about these so we don't
+ * accidentally write in new ones of the same name.
+ */
+function parsePropertyDeclarations( fileClass: ClassDeclaration ): Set<string> {
+	return fileClass.getInstanceProperties()
+		.reduce( ( props: Set<string>, prop: ClassInstancePropertyTypes ) => {
+			const propName = prop.getName();
+			return propName ? props.add( propName ) : props;  // don't add unnamed properties (not sure how we would have one of those, but seems its possible according to the TsSimpleAst types)
+		}, new Set<string>() );
 }
 
 
@@ -181,15 +201,17 @@ function parseMethods( fileClass: ClassDeclaration ): string[] {
  *
  * Method returns:
  *
- *     [ 'something', 'something2', 'something3' ]
+ *    Set( [ 'something', 'something2', 'something3' ] )
  */
-function parsePropertyAccesses( fileClass: ClassDeclaration ): string[] {
+function parsePropertyAccesses( fileClass: ClassDeclaration ): Set<string> {
 	const thisProps = fileClass
 		.getDescendantsOfKind( ts.SyntaxKind.PropertyAccessExpression )
 		.filter( prop => prop.getExpression().getKind() === ts.SyntaxKind.ThisKeyword );
 
-	const propNames = thisProps.map( prop => prop.getName() );
-	//console.log( propNames );
+	const propNamesSet = thisProps
+		.reduce( ( props: Set<string>, prop: PropertyAccessExpression ) => {
+			return props.add( prop.getName() );
+		}, new Set<string>() );
 
-	return propNames;
+	return propNamesSet;
 }
