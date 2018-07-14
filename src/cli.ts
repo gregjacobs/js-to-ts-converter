@@ -5,7 +5,7 @@ import * as fs from 'fs';
 
 import { convert } from "./converter/convert";
 import { createTsAstProject } from "./create-ts-ast-project";
-import Project from "ts-simple-ast";
+import Project, { IndentationText } from "ts-simple-ast";
 
 const ArgumentParser = require('argparse').ArgumentParser;
 
@@ -18,6 +18,11 @@ const parser = new ArgumentParser( {
 parser.addArgument( 'directory', {
 	help: 'The directory of .js files to convert'
 } );
+parser.addArgument( '--indentation-text', {
+	help: 'How you would like new code to be indented',
+	choices: [ 'tab', 'twospaces', 'fourspaces', 'eightspaces' ],
+	defaultValue: 'tab'
+} );
 
 const args = parser.parseArgs();
 const absolutePath = path.resolve( args.directory );
@@ -27,7 +32,9 @@ if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 	process.exit( 1 );
 }
 
-const tsAstProject = createTsAstProject( absolutePath );
+const tsAstProject = createTsAstProject( absolutePath, {
+	indentationText: resolveIndentationText( args.indentationText )
+} );
 
 // Print input files
 console.log( 'Processing the following source files:' );
@@ -43,6 +50,21 @@ printSourceFilesList( convertedTsAstProject, '  ' );
 // Save output files
 convertedTsAstProject.saveSync();
 
+
+/**
+ * Private helper to resolve the correct IndentationText enum from the CLI
+ * 'indentation' argument.
+ */
+function resolveIndentationText( indentationText: 'tab' | 'twospaces' | 'fourspaces' | 'eightspaces' ) {
+	switch( indentationText ) {
+		case 'tab'         : return IndentationText.Tab;
+		case 'twospaces'   : return IndentationText.TwoSpaces;
+		case 'fourspaces'  : return IndentationText.FourSpaces;
+		case 'eightspaces' : return IndentationText.EightSpaces;
+
+		default : return IndentationText.Tab;
+	}
+}
 
 /**
  * Private helper to print out the source files list in the given `astProject`
