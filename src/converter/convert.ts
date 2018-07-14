@@ -4,12 +4,12 @@ import { parseJsClasses } from "./parse-js-classes";
 
 export function convert( tsAstProject: Project ): Project {
 	// Parse the JS classes for all of the this.xyz properties that they use
-	const jsClassesGraph = parseJsClasses( tsAstProject );
+	const jsClasses = parseJsClasses( tsAstProject );
 
 	// Correct the JS classes' properties for superclass/subclass relationships
 	// (essentially remove properties from subclasses that are defined by their
 	// superclasses)
-	const propertiesCorrectedJsClasses = correctJsProperties( jsClassesGraph );
+	const propertiesCorrectedJsClasses = correctJsProperties( jsClasses );
 
 	// Fill in field definitions for each of the classes
 	propertiesCorrectedJsClasses.forEach( jsClass => {

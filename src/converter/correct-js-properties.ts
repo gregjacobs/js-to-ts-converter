@@ -32,6 +32,22 @@ export function correctJsProperties( jsClasses: JsClass[] ): JsClass[] {
 	// Second, connect the subclasses to superclasses in the graph
 	jsClasses.forEach( jsClass => {
 		if( jsClass.superclassId ) {
+			// As a bit of error checking, make sure that we're not going to
+			// accidentally create a graph node by adding an edge to
+			// jsClass.superclassId. This would happen if we didn't figure out
+			// the correct path to the superclass in the parse phase, or we
+			// didn't have the superclass's source file added to the project.
+			if( !jsClassHierarchyGraph.hasNode( jsClass.superclassId ) ) {
+				throw new Error( `
+					correct-js-properties.ts: no JsClass exists for the 
+					superclass identifier: '${jsClass.superclassId}'.
+					Was processing JsClass '${jsClass.name}' from path '${jsClass.path}'.
+					Make sure that the superclass's .js file is within the 
+					directory passed to this conversion utility, or otherwise 
+					there was a bug in creating the path/identifier to the superclass. 
+				`.replace( /^\t*/gm, '' ) );
+			}
+
 			jsClassHierarchyGraph.setEdge( jsClass.id, jsClass.superclassId );
 		}
 	} );
