@@ -1,9 +1,16 @@
 {
 	"name": "js-to-ts-converter",
 	"version": "0.0.1",
-	"private": true,
-	"description": "Small utility to convert ES6 classes to TypeScript by filling in property definitions",
-	"repository": "https://github.com/gregjacobs/js-to-ts-converter.git",
+	"description": "Small utility to rename .js->.ts, and convert ES6 classes to TypeScript classes by filling in property declarations. See readme for more details.",
+	"keywords": [ "typescript", "conversion" ],
+	"homepage": "https://github.com/gregjacobs/js-to-ts-converter",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/gregjacobs/js-to-ts-converter.git"
+	},
+	"bugs": {
+		"url" : "https://github.com/gregjacobs/js-to-ts-converter/issues"
+	},
 	"author": "Gregory Jacobs <greg@greg-jacobs.com>",
 	"license": "MIT",
 	"main": "dist/index.js",
@@ -14,8 +21,8 @@
 	"scripts": {
 		"build": "tsc",
 		"cli": "npm run build && node dist/cli.ts",
-		"run-example": "npm run cli test/fixture",
-		"test": "mocha --require ts-node/register --watch-extensions ts \"test/**/*.spec.ts\""
+		"test": "mocha --require ts-node/register --watch-extensions ts \"test/**/*.spec.ts\"",
+		"prepublishOnly": "npm test && npm run build"
 	},
 	"dependencies": {
 		"argparse": "^1.0.10",

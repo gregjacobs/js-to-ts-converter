@@ -30,7 +30,7 @@ if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 const tsAstProject = createTsAstProject( absolutePath );
 
 // Print input files
-console.log( 'Processing the following source files for JS classes:' );
+console.log( 'Processing the following source files:' );
 printSourceFilesList( tsAstProject, '  ' );
 
 // Convert
@@ -44,6 +44,10 @@ printSourceFilesList( convertedTsAstProject, '  ' );
 convertedTsAstProject.saveSync();
 
 
+/**
+ * Private helper to print out the source files list in the given `astProject`
+ * to the console.
+ */
 function printSourceFilesList( astProject: Project, indent = '' ) {
 	astProject.getSourceFiles().forEach( sf => {
 		console.log( `${indent}${sf.getFilePath()}` );
