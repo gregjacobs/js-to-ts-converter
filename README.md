@@ -3,11 +3,17 @@
 Small utility that I wrote to script converting a JS codebase which contains ES6 
 classes into TypeScript classes.
 
-The utility does two things:
+The utility performs the following transformations:
 
 1. Renames `.js` files to `.ts`
 2. Adds property declarations to ES6 classes so that they are compilable by the
    TypeScript compiler (see below).
+3. Changes function expressions used within a class with the `function` keyword 
+   into arrow functions (`() => {...}`).
+4. Removes any pre-arrow-function `var that = this;` or `var self = this;`, and
+   replaces the usages of the variable to be `this` again (which will behave
+   correctly with the above transformation from function expressions to arrow
+   functions).
  
 
 For #2 above, the utility basically looks at any `this` property accessed by a 

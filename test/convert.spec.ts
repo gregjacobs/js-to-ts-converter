@@ -28,6 +28,13 @@ describe( 'convert()', () => {
 		runTest( `${__dirname}/fixture/typescript-class` );
 	} );
 
+
+	it( `should replace function expressions used within a class with arrow 
+	     functions, and should remove any pre-arrow-function 'var this = that'`,
+	() => {
+		runTest( `${__dirname}/fixture/function-expressions-and-declarations` );
+	} );
+
 } );
 
 

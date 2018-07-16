@@ -2,7 +2,6 @@ import * as ts from 'typescript';
 import Project, { ClassDeclaration, ClassInstancePropertyTypes, ImportDeclaration, ImportSpecifier, MethodDeclaration, PropertyAccessExpression, SourceFile } from "ts-simple-ast";
 import { JsClass } from "../model/js-class";
 import * as path from "path";
-import * as _ from 'lodash';
 import { difference, union } from "../utils/set-utils";
 
 /**
