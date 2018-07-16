@@ -922,6 +922,12 @@ to-regex@^3.0.1, to-regex@^3.0.2:
     regex-not "^1.0.2"
     safe-regex "^1.1.0"
 
+trace-error@^0.0.7:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/trace-error/-/trace-error-0.0.7.tgz#cba9c470b27db3e99a9a26e548f21188538b9991"
+  dependencies:
+    weakmap "0.0.6"
+
 ts-node@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-7.0.0.tgz#a94a13c75e5e1aa6b82814b84c68deb339ba7bff"
@@ -999,6 +1005,10 @@ use@^3.1.0:
   resolved "https://registry.yarnpkg.com/use/-/use-3.1.0.tgz#14716bf03fdfefd03040aef58d8b4b85f3a7c544"
   dependencies:
     kind-of "^6.0.2"
+
+weakmap@0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/weakmap/-/weakmap-0.0.6.tgz#0c4fbde02e3b371f9222013fc6632a5c45419b29"
 
 wrappy@1:
   version "1.0.2"

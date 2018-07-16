@@ -1,5 +1,6 @@
 import Project, { ClassDeclaration, ElementAccessExpression, FunctionExpression, Identifier, MethodDeclaration, Node, ParameterDeclaration, PropertyAccessExpression, SourceFile, SyntaxKind, TypeGuards, VariableDeclaration } from "ts-simple-ast";
 import { propOrElemAccessWithObjFilter } from "../util/is-prop-or-elem-access-with-obj";
+const TraceError = require( 'trace-error' );
 
 /**
  * Parses the classes out of each .js file in the SourceFilesCollection, and
@@ -113,19 +114,20 @@ function replaceThisVarsWithThisKeyword(
 	node: Node,
 	thisVarIdentifiers: string[]  // ex: [ 'that', 'self', 'me' ]
 ) {
-	try {
-		doReplaceThisVarsWithThisKeyword( node, thisVarIdentifiers );
-	} catch( e ) {
-		console.error( `
-			An error occurred while converting variables which refer to \`this\`
-			with the \`this\` keyword itself. 
-			
-			Was processing file: '${node.getSourceFile().getFilePath()}'.
-			Node: ${node.getFullText()}.
-			Replacing identifier(s) '${thisVarIdentifiers}' with the 'this' keyword.
-		`.trim().replace( /^\t*/gm, '' ) );
-		throw e;
-	}
+	thisVarIdentifiers.forEach( ( thisVarIdentifier: string ) => {
+		try {
+			doReplaceThisVarWithThisKeyword( node, thisVarIdentifier );
+		} catch( error ) {
+			throw new TraceError( `
+				An error occurred while converting variables which refer to \`this\`
+				with the \`this\` keyword itself. 
+				
+				Was processing file: '${node.getSourceFile().getFilePath()}'.
+				Node: ${node.getFullText()}.
+				Was attempting to replace identifier '${thisVarIdentifier}' with the 'this' keyword.
+			`.trim().replace( /^\t*/gm, '' ), error );
+		}
+	} );
 }
 
 
@@ -133,21 +135,28 @@ function replaceThisVarsWithThisKeyword(
  * Performs the actual replacements for the {@link #replaceThisVarsWithThisKeyword}
  * function.
  */
-function doReplaceThisVarsWithThisKeyword(
+function doReplaceThisVarWithThisKeyword(
 	node: Node,
-	thisVarIdentifiers: string[]  // ex: [ 'that', 'self', 'me' ]
+	thisVarIdentifier: string  // ex: 'that' or 'self'
 ) {
-	thisVarIdentifiers.forEach( ( thisVarIdentifier: string ) => {
-		// grab PropertyAccessExpressions like `that.someProp` or `self.someProp`
-		const propAccessesOfThisVarIdentifiers: (PropertyAccessExpression | ElementAccessExpression)[] = node
-			.getDescendants()
-			.filter( propOrElemAccessWithObjFilter( thisVarIdentifier ) );
+	// grab PropertyAccessExpressions like `that.someProp` or `self.someProp`
+	const propAccessesOfThisVarIdentifiers: (PropertyAccessExpression | ElementAccessExpression)[] = node
+		.getDescendants()
+		.filter( propOrElemAccessWithObjFilter( thisVarIdentifier ) );
 
-		// Change propAccessesOfThisVarIdentifiers to use `this` as their
-		// expression (object) instead of `that`/`self`/etc.
-		propAccessesOfThisVarIdentifiers.forEach( ( propAccess: PropertyAccessExpression | ElementAccessExpression ) => {
+	// Change propAccessesOfThisVarIdentifiers to use `this` as their
+	// expression (object) instead of `that`/`self`/etc.
+	propAccessesOfThisVarIdentifiers.forEach( ( propAccess: PropertyAccessExpression | ElementAccessExpression ) => {
+		try {
 			const identifier = propAccess.getExpression() as Identifier;
 			identifier.replaceWithText( `this` );
-		} );
+
+		} catch( error ) {
+			throw new TraceError( `
+				An error occurred while attempting to convert the expression:
+				${propAccess.getFullText()} to replace '${thisVarIdentifier}'
+				with the 'this' keyword.
+			`.trim().replace( /^\t*/gm, '' ), error );
+		}
 	} );
 }
