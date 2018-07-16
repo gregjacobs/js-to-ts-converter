@@ -93,6 +93,14 @@ function replaceSelfReferencingVars( classDeclaration: ClassDeclaration ) {
 		const thisVarIdentifiers = thisVarDeclarations
 			.map( ( thisVarDec: VariableDeclaration ) => thisVarDec.getName() );
 
+
+		// Remove the `var that = this` or `var self = this` variable
+		// declarations. Seems to need to be done before the `that->this`
+		// conversions in some cases, so putting it before
+		thisVarDeclarations.forEach( ( varDec: VariableDeclaration ) => {
+			varDec.remove();
+		} );
+
 		thisVarIdentifiers.forEach( ( thisVarIdentifier: string ) => {
 			// grab PropertyAccessExpressions like `that.someProp` or `self.someProp`
 			const propAccessesOfThisVarIdentifiers: (PropertyAccessExpression | ElementAccessExpression)[] = method
@@ -104,11 +112,6 @@ function replaceSelfReferencingVars( classDeclaration: ClassDeclaration ) {
 			propAccessesOfThisVarIdentifiers.forEach( ( propAccess: PropertyAccessExpression | ElementAccessExpression ) => {
 				const identifier = propAccess.getExpression() as Identifier;
 				identifier.replaceWithText( `this` );
-			} );
-
-			// Remove the `var that = this` or `var self = this` variable declarations
-			thisVarDeclarations.forEach( ( varDec: VariableDeclaration ) => {
-				varDec.remove();
 			} );
 		} );
 	} );
