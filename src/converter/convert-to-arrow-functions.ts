@@ -101,18 +101,53 @@ function replaceSelfReferencingVars( classDeclaration: ClassDeclaration ) {
 			varDec.remove();
 		} );
 
-		thisVarIdentifiers.forEach( ( thisVarIdentifier: string ) => {
-			// grab PropertyAccessExpressions like `that.someProp` or `self.someProp`
-			const propAccessesOfThisVarIdentifiers: (PropertyAccessExpression | ElementAccessExpression)[] = method
-				.getDescendants()
-				.filter( propOrElemAccessWithObjFilter( thisVarIdentifier ) );
+		replaceThisVarsWithThisKeyword( method, thisVarIdentifiers );
+	} );
+}
 
-			// Change propAccessesOfThisVarIdentifiers to use `this` as their
-			// expression (object) instead of `that`/`self`/etc.
-			propAccessesOfThisVarIdentifiers.forEach( ( propAccess: PropertyAccessExpression | ElementAccessExpression ) => {
-				const identifier = propAccess.getExpression() as Identifier;
-				identifier.replaceWithText( `this` );
-			} );
+
+/**
+ * Replaces any variables that referenced `this` with the `this` keyword itself.
+ */
+function replaceThisVarsWithThisKeyword(
+	node: Node,
+	thisVarIdentifiers: string[]  // ex: [ 'that', 'self', 'me' ]
+) {
+	try {
+		doReplaceThisVarsWithThisKeyword( node, thisVarIdentifiers );
+	} catch( e ) {
+		console.error( `
+			An error occurred while converting variables which refer to \`this\`
+			with the \`this\` keyword itself. 
+			
+			Was processing file: '${node.getSourceFile().getFilePath()}'.
+			Node: ${node.getFullText()}.
+			Replacing identifier(s) '${thisVarIdentifiers}' with the 'this' keyword.
+		`.trim().replace( /^\t*/gm, '' ) );
+		throw e;
+	}
+}
+
+
+/**
+ * Performs the actual replacements for the {@link #replaceThisVarsWithThisKeyword}
+ * function.
+ */
+function doReplaceThisVarsWithThisKeyword(
+	node: Node,
+	thisVarIdentifiers: string[]  // ex: [ 'that', 'self', 'me' ]
+) {
+	thisVarIdentifiers.forEach( ( thisVarIdentifier: string ) => {
+		// grab PropertyAccessExpressions like `that.someProp` or `self.someProp`
+		const propAccessesOfThisVarIdentifiers: (PropertyAccessExpression | ElementAccessExpression)[] = node
+			.getDescendants()
+			.filter( propOrElemAccessWithObjFilter( thisVarIdentifier ) );
+
+		// Change propAccessesOfThisVarIdentifiers to use `this` as their
+		// expression (object) instead of `that`/`self`/etc.
+		propAccessesOfThisVarIdentifiers.forEach( ( propAccess: PropertyAccessExpression | ElementAccessExpression ) => {
+			const identifier = propAccess.getExpression() as Identifier;
+			identifier.replaceWithText( `this` );
 		} );
 	} );
 }
