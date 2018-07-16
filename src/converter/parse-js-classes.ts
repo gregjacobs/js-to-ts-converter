@@ -1,8 +1,8 @@
-import * as ts from 'typescript';
-import Project, { ClassDeclaration, ClassInstancePropertyTypes, ImportDeclaration, ImportSpecifier, MethodDeclaration, PropertyAccessExpression, SourceFile } from "ts-simple-ast";
+import Project, { ts, ClassDeclaration, ClassInstancePropertyTypes, ImportDeclaration, ImportSpecifier, MethodDeclaration, Node, PropertyAccessExpression, SourceFile, SyntaxKind, VariableDeclaration } from "ts-simple-ast";
 import { JsClass } from "../model/js-class";
 import * as path from "path";
 import { difference, union } from "../util/set-utils";
+import { parseDestructuredProps } from "../util/parse-destructured-props";
 
 /**
  * Parses the classes out of each .js file in the SourceFilesCollection, and
@@ -192,25 +192,40 @@ function parsePropertyDeclarations( fileClass: ClassDeclaration ): Set<string> {
 /**
  * Parses the property names of `this` PropertyAccessExpressions.
  *
- * Example:
+ * Examples:
  *
  *     this.something = 42;
- *     this.something2 = 43;
- *     console.log( this.something3 );
+ *     console.log( this.something2 );
+ *
+ *     const { destructured1, destructured2 } = this;
  *
  * Method returns:
  *
- *    Set( [ 'something', 'something2', 'something3' ] )
+ *    Set( [ 'something', 'something2', 'destructured1', 'destructured2' ] )
  */
 function parsePropertyAccesses( fileClass: ClassDeclaration ): Set<string> {
+	// First, find all of the `this.something` properties
 	const thisProps = fileClass
-		.getDescendantsOfKind( ts.SyntaxKind.PropertyAccessExpression )
-		.filter( prop => prop.getExpression().getKind() === ts.SyntaxKind.ThisKeyword );
+		.getDescendantsOfKind( SyntaxKind.PropertyAccessExpression )
+		.filter( prop => prop.getExpression().getKind() === SyntaxKind.ThisKeyword );
 
 	const propNamesSet = thisProps
 		.reduce( ( props: Set<string>, prop: PropertyAccessExpression ) => {
 			return props.add( prop.getName() );
 		}, new Set<string>() );
 
-	return propNamesSet;
+	// Second, find any `var { a, b } = this` statements
+	const destructuredPropsSet = fileClass
+		.getDescendantsOfKind( SyntaxKind.VariableDeclaration )
+		.filter( ( varDec: VariableDeclaration ) => {
+			return varDec.compilerNode.name.kind === SyntaxKind.ObjectBindingPattern;
+		} )
+		.reduce( ( propNames: Set<string>, varDec: VariableDeclaration ) => {
+			const destructuredPropNames = parseDestructuredProps( varDec.compilerNode.name as ts.ObjectBindingPattern );
+			destructuredPropNames.forEach( propName => propNames.add( propName ) );
+
+			return propNames;
+		}, new Set<string>() );
+
+	return union( propNamesSet, destructuredPropsSet );
 }

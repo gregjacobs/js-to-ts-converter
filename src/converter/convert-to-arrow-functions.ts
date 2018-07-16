@@ -1,5 +1,6 @@
 import Project, { ClassDeclaration, ElementAccessExpression, FunctionExpression, Identifier, MethodDeclaration, Node, ParameterDeclaration, PropertyAccessExpression, SourceFile, SyntaxKind, TypeGuards, VariableDeclaration } from "ts-simple-ast";
 import { propOrElemAccessWithObjFilter } from "../util/is-prop-or-elem-access-with-obj";
+import { isThisReferencingVar } from "../util/is-this-referencing-var";
 const TraceError = require( 'trace-error' );
 
 /**
@@ -125,9 +126,7 @@ function doReplaceSelfReferencingVars( node: Node ) {
 	// find var declarations like `var that = this;` or `var self = this;`
 	const thisVarDeclarations = node
 		.getDescendantsOfKind( SyntaxKind.VariableDeclaration )
-		.filter( ( varDec: VariableDeclaration ) => {
-			return !!varDec.getInitializerIfKind( SyntaxKind.ThisKeyword );
-		} );
+		.filter( isThisReferencingVar );
 
 	// Get the array of identifiers assigned to `this`. Ex: [ 'that', 'self' ]
 	const thisVarIdentifiers = thisVarDeclarations

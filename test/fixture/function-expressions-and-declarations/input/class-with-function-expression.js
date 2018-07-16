@@ -35,6 +35,12 @@ class ClassWithFunctionExpression {
 		}
 	}
 
+	destructuredThis() {
+		// should simply not throw an error on this construct, while populating
+		// these variables as PropertyDeclarations
+		const { destructured1, destructured2 } = this;
+	}
+
 	complexMethodWhichCausesErrorInTsSimpleAstTransforms() {
 		const that = this;
 

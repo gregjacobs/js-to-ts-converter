@@ -3,6 +3,8 @@ class ClassWithFunctionExpression {
 	public prop2: any;
 	public innerAccessedProp: any;
 	public blah: any;
+	public destructured1: any;
+	public destructured2: any;
 
 	myMethod() {
 		var myFn1 = () => {
@@ -33,6 +35,12 @@ class ClassWithFunctionExpression {
 		var myFn1 = () => {
 			this.prop1 = 1;
 		}
+	}
+
+	destructuredThis() {
+		// should simply not throw an error on this construct, while populating
+		// these variables as PropertyDeclarations
+		const { destructured1, destructured2 } = this;
 	}
 
 	complexMethodWhichCausesErrorInTsSimpleAstTransforms() {
