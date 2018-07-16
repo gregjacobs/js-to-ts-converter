@@ -1,6 +1,7 @@
 class ClassWithFunctionExpression {
 	public prop1: any;
 	public prop2: any;
+	public innerAccessedProp: any;
 	public blah: any;
 
 	myMethod() {
@@ -19,6 +20,10 @@ class ClassWithFunctionExpression {
 
 		var myFn1 = () => {
 			this.prop1 = 1;
+
+			var myNestedFn = () => {
+				this.innerAccessedProp = 2;
+			}
 		}
 	}
 

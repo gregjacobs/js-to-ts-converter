@@ -19,6 +19,10 @@ class ClassWithFunctionExpression {
 
 		var myFn1 = function() {
 			self.prop1 = 1;
+
+			var myNestedFn = function() {
+				self.innerAccessedProp = 2;
+			}
 		}
 	}
 

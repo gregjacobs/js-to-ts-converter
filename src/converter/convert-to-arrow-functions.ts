@@ -39,14 +39,30 @@ export function convertToArrowFunctions( tsAstProject: Project ): Project {
  *    var something = ( a, b ) => { ... }
  */
 function replaceFunctionExpressions( classDeclaration: ClassDeclaration ) {
+	const className = classDeclaration.getName();
 	const functionExpressions = classDeclaration.getDescendantsOfKind( SyntaxKind.FunctionExpression );
+	const functionExpressionsText = functionExpressions.map( fe => fe.getFullText() );  // for debugging, which may be needed after some function expressions have been replaced
 
-	functionExpressions.forEach( ( functionExpression: FunctionExpression ) => {
-		let newText = `(` + paramsToText( functionExpression ) + `) => `;
-		newText += functionExpression.getBody().getFullText()
-			.replace( /^\s*/, '' );  // replace any leading spaces from the function body
+	// Need to process the function expressions in reverse order to produce a
+	// bottom-up transformation. If we do top down, we can replace a parent
+	// function expression before the child function expression, and then we
+	// access a node (the child function expression) that has been removed
+	functionExpressions.reverse().forEach( ( functionExpression: FunctionExpression, i: number ) => {
+		try {
+			let newText = `(` + paramsToText( functionExpression ) + `) => `;
+			newText += functionExpression.getBody().getFullText()
+				.replace( /^\s*/, '' );  // replace any leading spaces from the function body
 
-		functionExpression.replaceWithText( newText );
+			functionExpression.replaceWithText( newText );
+		} catch( error ) {
+			throw new TraceError( `
+				An error occurred while trying to replace a function expression
+				with an arrow function. Was processing class ${className}, and
+				looking at a function expression with text:
+				
+				${functionExpressionsText[ i ]}
+			`.trim().replace( /^\t*/gm, '' ), error );
+		}
 	} );
 }
 
