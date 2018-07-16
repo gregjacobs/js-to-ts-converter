@@ -37,6 +37,7 @@ class ClassWithFunctionExpression {
 
 	complexMethodWhichCausesErrorInTsSimpleAstTransforms() {
 		this.blah.blah2.blah3 = 42;
+		this.blah.blah2.blah3.blah4 = 43;
 
 		// below is potentially another test to check, but above seems to
 		// display the previous bug

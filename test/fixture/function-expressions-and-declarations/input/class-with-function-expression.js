@@ -39,6 +39,7 @@ class ClassWithFunctionExpression {
 		const that = this;
 
 		that.blah.blah2.blah3 = 42;
+		that.blah.blah2.blah3.blah4 = 43;
 
 		// below is potentially another test to check, but above seems to
 		// display the previous bug

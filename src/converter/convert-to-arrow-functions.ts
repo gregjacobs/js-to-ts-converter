@@ -155,6 +155,8 @@ function doReplaceThisVarWithThisKeyword(
 	node: Node,
 	thisVarIdentifier: string  // ex: 'that' or 'self'
 ) {
+	const nodeText = node.getFullText();  // for debuggig information
+
 	// grab PropertyAccessExpressions like `that.someProp` or `self.someProp`
 	const propAccessesOfThisVarIdentifiers: (PropertyAccessExpression | ElementAccessExpression)[] = node
 		.getDescendants()
@@ -163,11 +165,30 @@ function doReplaceThisVarWithThisKeyword(
 	// Change propAccessesOfThisVarIdentifiers to use `this` as their
 	// expression (object) instead of `that`/`self`/etc.
 	propAccessesOfThisVarIdentifiers.forEach( ( propAccess: PropertyAccessExpression | ElementAccessExpression ) => {
+		const propAccessText = propAccess.getText();
+
 		try {
-			const newText = propAccess.getText()
+			// Attempt workaround for very long property access expressions.
+			// If we just replace the `that.something` part of `that.something.something2.something3.something4`,
+			// then ts-simple-ast throws an error. So replacing the entire
+			// chained PropertyAccessExpression instead.
+			let parentMostPropAccess = propAccess as Node;
+			while( parentMostPropAccess.getParentIfKind( SyntaxKind.PropertyAccessExpression ) ) {
+				parentMostPropAccess = parentMostPropAccess.getParent()!;
+			}
+
+			const newText = parentMostPropAccess.getText()
 				.replace( new RegExp( '^' + thisVarIdentifier ), 'this' );
 
-			propAccess.replaceWithText( newText );
+			parentMostPropAccess.replaceWithText( newText );
+
+			// Old workaround #2: Failed at 4 levels of properties:
+			//    that.something1.something2.something3.something4
+			// const newText = propAccessText
+			// 	.replace( new RegExp( '^' + thisVarIdentifier ), 'this' );
+			//
+			// console.log( 'new text: ', newText );
+			// propAccess.replaceWithText( newText );
 
 			// Old code which threw an error when we had a long PropertyAccessExpression
 			// like `that.something1.something2.something3`
@@ -177,8 +198,12 @@ function doReplaceThisVarWithThisKeyword(
 		} catch( error ) {
 			throw new TraceError( `
 				An error occurred while attempting to convert the expression:
-				${propAccess.getFullText()} to replace '${thisVarIdentifier}'
-				with the 'this' keyword.
+				  ${propAccessText} 
+				to replace '${thisVarIdentifier}' with the 'this' keyword.
+				
+				Was looking at node with text:
+				
+				${nodeText}
 			`.trim().replace( /^\t*/gm, '' ), error );
 		}
 	} );
