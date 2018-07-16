@@ -1,4 +1,4 @@
-import { union } from "../utils/set-utils";
+import { union } from "../util/set-utils";
 
 /**
  * Represents a JavaScript class found in a source file.

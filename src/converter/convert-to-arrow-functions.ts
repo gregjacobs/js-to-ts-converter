@@ -1,5 +1,5 @@
-import * as ts from 'typescript';
-import Project, { ClassDeclaration, FunctionExpression, Identifier, MethodDeclaration, ParameterDeclaration, PropertyAccessExpression, SourceFile, SyntaxKind, TypeGuards, VariableDeclaration } from "ts-simple-ast";
+import Project, { ClassDeclaration, ElementAccessExpression, FunctionExpression, Identifier, MethodDeclaration, Node, ParameterDeclaration, PropertyAccessExpression, SourceFile, SyntaxKind, TypeGuards, VariableDeclaration } from "ts-simple-ast";
+import { propOrElemAccessWithObjFilter } from "../util/is-prop-or-elem-access-with-obj";
 
 /**
  * Parses the classes out of each .js file in the SourceFilesCollection, and
@@ -45,8 +45,6 @@ function replaceFunctionExpressions( classDeclaration: ClassDeclaration ) {
 		newText += functionExpression.getBody().getFullText()
 			.replace( /^\s*/, '' );  // replace any leading spaces from the function body
 
-		console.log( newText );
-
 		functionExpression.replaceWithText( newText );
 	} );
 }
@@ -84,45 +82,34 @@ function replaceSelfReferencingVars( classDeclaration: ClassDeclaration ) {
 	const methods = classDeclaration.getMethods();
 
 	methods.forEach( ( method: MethodDeclaration ) => {
+		// find var declarations like `var that = this;` or `var self = this;`
 		const thisVarDeclarations = method
 			.getDescendantsOfKind( SyntaxKind.VariableDeclaration )
 			.filter( ( varDec: VariableDeclaration ) => {
 				return !!varDec.getInitializerIfKind( SyntaxKind.ThisKeyword );
 			} );
 
+		// Get the array of identifiers assigned to `this`. Ex: [ 'that', 'self' ]
 		const thisVarIdentifiers = thisVarDeclarations
 			.map( ( thisVarDec: VariableDeclaration ) => thisVarDec.getName() );
 
-		// Get PropertyAccessExpressions that use the `thisVarIdentifiers` as
-		// their expression, but only if their parents are not PropertyAccessExpressions
-		// of their own.
-		//
-		// We want to grab expressions of the form:
-		//    `that.someProp`
-		// but not expressions like:
-		//    `something.that.someProp`
-		const propAccessesOfThisVarIdentifiers = method
-			.getDescendantsOfKind( SyntaxKind.PropertyAccessExpression )
-			.filter( ( propAccess: PropertyAccessExpression ) => {
-				// keep the PropertyAccessExpression if it is a "top-level"
-				// PropertyAccessExpression. Meaning, we want `that.someProp`,
-				// but not nested PropertyAccessExpressions like `something.that.someProp`
-				return !propAccess.getParentIfKind( SyntaxKind.PropertyAccessExpression );
-			} )
-			.filter( ( propAccess: PropertyAccessExpression ) => {
-				const expr = propAccess.getExpression() as Identifier;
+		thisVarIdentifiers.forEach( ( thisVarIdentifier: string ) => {
+			// grab PropertyAccessExpressions like `that.someProp` or `self.someProp`
+			const propAccessesOfThisVarIdentifiers: (PropertyAccessExpression | ElementAccessExpression)[] = method
+				.getDescendants()
+				.filter( propOrElemAccessWithObjFilter( thisVarIdentifier ) );
 
-				if( TypeGuards.isIdentifier( expr ) ) {
-					const name = expr.getText();
-					return thisVarIdentifiers.includes( name );
-				} else {
-					return false;
-				}
+			// Change propAccessesOfThisVarIdentifiers to use `this` as their
+			// expression (object) instead of `that`/`self`/etc.
+			propAccessesOfThisVarIdentifiers.forEach( ( propAccess: PropertyAccessExpression | ElementAccessExpression ) => {
+				const identifier = propAccess.getExpression() as Identifier;
+				identifier.replaceWithText( `this` );
 			} );
 
-		// TODO: Change propAccessesOfThisVarIdentifiers to use `this` as their
-		// expression instead of `that`
-
-
+			// Remove the `var that = this` or `var self = this` variable declarations
+			thisVarDeclarations.forEach( ( varDec: VariableDeclaration ) => {
+				varDec.remove();
+			} );
+		} );
 	} );
 }
