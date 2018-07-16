@@ -142,7 +142,8 @@ function doReplaceThisVarWithThisKeyword(
 	// grab PropertyAccessExpressions like `that.someProp` or `self.someProp`
 	const propAccessesOfThisVarIdentifiers: (PropertyAccessExpression | ElementAccessExpression)[] = node
 		.getDescendants()
-		.filter( propOrElemAccessWithObjFilter( thisVarIdentifier ) );
+		.filter( propOrElemAccessWithObjFilter( thisVarIdentifier ) )
+		.reverse();  // seem to need to do this transformation in a bottom-up manner, or we can run into the error of "Attempted to get information from a node that was removed or forgotten"
 
 	// Change propAccessesOfThisVarIdentifiers to use `this` as their
 	// expression (object) instead of `that`/`self`/etc.
