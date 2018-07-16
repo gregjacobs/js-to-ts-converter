@@ -31,4 +31,38 @@ class ClassWithFunctionExpression {
 		}
 	}
 
+	complexMethodWhichCausesErrorInTsSimpleAstTransforms() {
+		const that = this;
+
+		that.blah.blah2.blah3 = 42;
+
+		// below is potentially another test to check, but above seems to
+		// display the previous bug
+		//
+		// if( this.asdf ) {
+		// 	_.someFn( that.asdf.asdf2, () => {
+		// 		_.someOtherFn( that.blah.blah2.blah3, () => {
+		// 		} );
+		// } );
+		// }
+
+		// if( !this.something ) {
+		// 	this.something = this.someOtherThing.fn( () => {
+		// 		const abc = [];
+		//
+		// 		_.forEach(that.model.something.else, (a) => {
+		// 			// if( asdf ) {
+		// 			// 	that.model.something = 1;
+		// 			// } else {
+		// 			// 	that.model.somethingElse = 2;
+		// 			// }
+		// 		} );
+		//
+		// 		that.model.something = 42;
+		// 		_.set( that.model.something, 'abc', 'def' );
+		// 		that.somethingElse = 11;
+		// 	} );
+		// }
+	}
+
 }

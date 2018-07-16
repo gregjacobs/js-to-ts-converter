@@ -142,15 +142,21 @@ function doReplaceThisVarWithThisKeyword(
 	// grab PropertyAccessExpressions like `that.someProp` or `self.someProp`
 	const propAccessesOfThisVarIdentifiers: (PropertyAccessExpression | ElementAccessExpression)[] = node
 		.getDescendants()
-		.filter( propOrElemAccessWithObjFilter( thisVarIdentifier ) )
-		.reverse();  // seem to need to do this transformation in a bottom-up manner, or we can run into the error of "Attempted to get information from a node that was removed or forgotten"
+		.filter( propOrElemAccessWithObjFilter( thisVarIdentifier ) );  // seem to need to do this transformation in a bottom-up manner, or we can run into the error of "Attempted to get information from a node that was removed or forgotten"
 
 	// Change propAccessesOfThisVarIdentifiers to use `this` as their
 	// expression (object) instead of `that`/`self`/etc.
 	propAccessesOfThisVarIdentifiers.forEach( ( propAccess: PropertyAccessExpression | ElementAccessExpression ) => {
 		try {
-			const identifier = propAccess.getExpression() as Identifier;
-			identifier.replaceWithText( `this` );
+			const newText = propAccess.getText()
+				.replace( new RegExp( '^' + thisVarIdentifier ), 'this' );
+
+			propAccess.replaceWithText( newText );
+
+			// Old code which threw an error when we had a long PropertyAccessExpression
+			// like `that.something1.something2.something3`
+			//const identifier = propAccess.getExpression() as Identifier;
+			//identifier.replaceWithText( `this` );
 
 		} catch( error ) {
 			throw new TraceError( `
