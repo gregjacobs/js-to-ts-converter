@@ -96,30 +96,52 @@ function paramsToText( functionExpression: FunctionExpression ): string {
  *     };
  */
 function replaceSelfReferencingVars( classDeclaration: ClassDeclaration ) {
+	const sourceFile = classDeclaration.getSourceFile();  // for debugging info
 	const methods = classDeclaration.getMethods();
 
 	methods.forEach( ( method: MethodDeclaration ) => {
-		// find var declarations like `var that = this;` or `var self = this;`
-		const thisVarDeclarations = method
-			.getDescendantsOfKind( SyntaxKind.VariableDeclaration )
-			.filter( ( varDec: VariableDeclaration ) => {
-				return !!varDec.getInitializerIfKind( SyntaxKind.ThisKeyword );
-			} );
+		const methodText = method.getFullText();  // for debugging info
 
-		// Get the array of identifiers assigned to `this`. Ex: [ 'that', 'self' ]
-		const thisVarIdentifiers = thisVarDeclarations
-			.map( ( thisVarDec: VariableDeclaration ) => thisVarDec.getName() );
+		try {
+			doReplaceSelfReferencingVars( method );
 
+		} catch( error ) {
+			throw new TraceError( `
+				An error occurred while converting variables which refer to \`this\`
+				with the \`this\` keyword itself. 
+				
+				Was processing file: '${sourceFile.getFilePath()}'.
+				Processing the method with text: 
+				  ${methodText}.
+			`.trim().replace( /^\t*/gm, '' ), error );
+		}
+	} );
+}
 
-		// Remove the `var that = this` or `var self = this` variable
-		// declarations. Seems to need to be done before the `that->this`
-		// conversions in some cases, so putting it before
-		thisVarDeclarations.forEach( ( varDec: VariableDeclaration ) => {
-			varDec.remove();
+/**
+ * Performs the actual replacements for {@link #replaceSelfReferencingVars}.
+ */
+function doReplaceSelfReferencingVars( node: Node ) {
+	// find var declarations like `var that = this;` or `var self = this;`
+	const thisVarDeclarations = node
+		.getDescendantsOfKind( SyntaxKind.VariableDeclaration )
+		.filter( ( varDec: VariableDeclaration ) => {
+			return !!varDec.getInitializerIfKind( SyntaxKind.ThisKeyword );
 		} );
 
-		replaceThisVarsWithThisKeyword( method, thisVarIdentifiers );
+	// Get the array of identifiers assigned to `this`. Ex: [ 'that', 'self' ]
+	const thisVarIdentifiers = thisVarDeclarations
+		.map( ( thisVarDec: VariableDeclaration ) => thisVarDec.getName() );
+
+
+	// Remove the `var that = this` or `var self = this` variable
+	// declarations. Seems to need to be done before the `that->this`
+	// conversions in some cases, so putting it before
+	thisVarDeclarations.forEach( ( varDec: VariableDeclaration ) => {
+		varDec.remove();
 	} );
+
+	replaceThisVarsWithThisKeyword( node, thisVarIdentifiers );
 }
 
 
@@ -133,13 +155,13 @@ function replaceThisVarsWithThisKeyword(
 	thisVarIdentifiers.forEach( ( thisVarIdentifier: string ) => {
 		try {
 			doReplaceThisVarWithThisKeyword( node, thisVarIdentifier );
+
 		} catch( error ) {
 			throw new TraceError( `
 				An error occurred while converting variables which refer to \`this\`
-				with the \`this\` keyword itself. 
+				(the identifier(s): '${thisVarIdentifiers.join("',")}') with the 
+				\`this\` keyword itself. 
 				
-				Was processing file: '${node.getSourceFile().getFilePath()}'.
-				Node: ${node.getFullText()}.
 				Was attempting to replace identifier '${thisVarIdentifier}' with the 'this' keyword.
 			`.trim().replace( /^\t*/gm, '' ), error );
 		}
