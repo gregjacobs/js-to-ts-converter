@@ -6,8 +6,8 @@ import { Node, SyntaxKind, TypeGuards, VariableDeclaration } from "ts-simple-ast
  *     var self = this;
  *
  *
- * Will return false for the following, however, since this is more than one
- * variable:
+ * Will return false for the following, however, since this is a destructuring
+ * of the `this` object's properties.
  *
  *     var { prop1, prop2 } = this;
  */

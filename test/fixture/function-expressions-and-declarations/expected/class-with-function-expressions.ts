@@ -1,39 +1,43 @@
-class ClassWithFunctionExpression {
+class ClassWithFunctionExpressions {
+	public destructured1: any;
+	public destructured2: any;
 	public prop1: any;
 	public prop2: any;
 	public innerAccessedProp: any;
 	public blah: any;
-	public destructured1: any;
-	public destructured2: any;
 
 	myMethod() {
-		var myFn1 = () => {
-			this.prop1 = 1;
+		var that = this;
+
+		var myFn1 = function() {
+			that.prop1 = 1;
 		}
 
-		var myFn2 = (a, b) => {
-			this.prop2 = 1;
-			this['prop3'] = 2;
+		var myFn2 = function(a, b) {
+			that.prop2 = 1;
+			that['prop3'] = 2;
 		}
 	}
 
 	myMethod2() {
-		var somethingElse = 1;
+		var self = this,
+		    somethingElse = 1;
 
-		var myFn1 = () => {
-			this.prop1 = 1;
+		var myFn1 = function() {
+			self.prop1 = 1;
 
-			var myNestedFn = () => {
-				this.innerAccessedProp = 2;
+			var myNestedFn = function() {
+				self.innerAccessedProp = 2;
 			}
 		}
 	}
 
 	myMethod3() {
-		var somethingElse = 1;
+		var somethingElse = 1,
+		    me = this;
 
-		var myFn1 = () => {
-			this.prop1 = 1;
+		var myFn1 = function() {
+			me.prop1 = 1;
 		}
 	}
 
@@ -44,8 +48,10 @@ class ClassWithFunctionExpression {
 	}
 
 	complexMethodWhichCausesErrorInTsSimpleAstTransforms() {
-		this.blah.blah2.blah3 = 42;
-		this.blah.blah2.blah3.blah4 = 43;
+		const that = this;
+
+		that.blah.blah2.blah3 = 42;
+		that.blah.blah2.blah3.blah4 = 43;
 
 		// below is potentially another test to check, but above seems to
 		// display the previous bug

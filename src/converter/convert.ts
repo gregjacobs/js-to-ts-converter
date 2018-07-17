@@ -1,13 +1,11 @@
 import Project, { ClassInstancePropertyTypes, PropertyDeclaration, PropertyDeclarationStructure, Scope } from "ts-simple-ast";
 import { correctJsProperties } from "./correct-js-properties";
 import { parseJsClasses } from "./parse-js-classes";
-import { convertToArrowFunctions } from "./convert-to-arrow-functions";
 
+/**
+ * Converts the source .js code to .ts
+ */
 export function convert( tsAstProject: Project ): Project {
-	// First thing: change any function expressions in the JS classes to arrow
-	// functions, and remove any `var that = this;` statements.
-	tsAstProject = convertToArrowFunctions( tsAstProject );
-
 	// Parse the JS classes for all of the this.xyz properties that they use
 	const jsClasses = parseJsClasses( tsAstProject );
 

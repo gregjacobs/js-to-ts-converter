@@ -1,11 +1,15 @@
 /**
- * Unions two sets to create a combined set. Does not mutate the input sets.
+ * Unions two or more sets to create a combined set. Does not mutate the input
+ * sets.
  */
-export function union<T>( setA: Set<T>, setB: Set<T> ) {
+export function union<T>( setA: Set<T>, ...sets: Set<T>[] ) {
 	const union = new Set<T>( setA );
-	for( const elem of setB ) {
-		union.add(elem);
-	}
+
+	sets.forEach( currentSet => {
+		for( const elem of currentSet ) {
+			union.add( elem );
+		}
+	} );
 	return union;
 }
 

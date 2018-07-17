@@ -1,8 +1,10 @@
 import Project, { ts, ClassDeclaration, ClassInstancePropertyTypes, ImportDeclaration, ImportSpecifier, MethodDeclaration, Node, PropertyAccessExpression, SourceFile, SyntaxKind, VariableDeclaration } from "ts-simple-ast";
 import { JsClass } from "../model/js-class";
-import * as path from "path";
 import { difference, union } from "../util/set-utils";
 import { parseDestructuredProps } from "../util/parse-destructured-props";
+import { parseSuperclassNameAndPath } from "../util/parse-superclass-name-and-path";
+import { isThisReferencingVar } from "../util/is-this-referencing-var";
+import { propertyAccessWithObjFilter } from "../util/is-property-access-with-obj";
 
 /**
  * Parses the classes out of each .js file in the SourceFilesCollection, and
@@ -54,124 +56,51 @@ export function parseJsClasses( tsAstProject: Project ): JsClass[] {
 function parseFileClasses( sourceFile: SourceFile ): JsClass[] {
 	return sourceFile.getClasses().map( fileClass => {
 		const className = fileClass.getName();
-		const { superclassName, superclassPath } = parseSuperclass( sourceFile, fileClass );
-		const methods = parseMethods( fileClass );
+		const { superclassName, superclassPath } = parseSuperclassNameAndPath( sourceFile, fileClass );
+		const methodNames = getMethodNames( fileClass );
+		const propertyNames = getPropertyNames( fileClass );
 
-		const existingPropertyDeclarations = parsePropertyDeclarations( fileClass );  // in case we are actually parsing a TypeScript class with existing declarations
-		const propertyAccesses = parsePropertyAccesses( fileClass );
-		const combinedProperties = union( existingPropertyDeclarations, propertyAccesses );
-
-		const propertiesWithoutMethods = difference( combinedProperties, methods );  // remove any method names from this Set
+		const propertiesMinusMethods = difference( propertyNames, methodNames );  // remove any method names from this Set
 
 		return new JsClass( {
 			path: sourceFile.getFilePath(),
 			name: className,
 			superclassName,
 			superclassPath,
-			methods,
-			properties: propertiesWithoutMethods
+			methods: methodNames,
+			properties: propertiesMinusMethods
 		} );
 	} );
-}
-
-/**
- * Given a file and ClassDeclaration, finds the name of the superclass and the
- * full path to the module (file) that hosts the superclass.
- *
- * `superclass` and `superclassPath` in the return object will be `null` if
- * there is no superclass.
- */
-function parseSuperclass(
-	file: SourceFile,
-	fileClass: ClassDeclaration
-): {
-	superclassName: string | undefined;
-	superclassPath: string | undefined;
-} {
-	let superclassName: string | undefined;
-	let superclassPath: string | undefined;
-
-	const heritage = fileClass.getExtends();
-	if( heritage ) {
-		superclassName = heritage.getExpression().getText();
-
-		// Confirm that the superclass is an identifier rather than an
-		// expression. It would be a bit much to try to understand expressions
-		// as a class's 'extends', so just ignore these for now.
-		// Example of ignored class extends:
-		//
-		//    class MyClass extends Mixin.mix( MixinClass1, MixinClass2 )
-		//
-		if( isValidIdentifier( superclassName ) ) {
-			superclassPath = findImportPathForIdentifier( file, superclassName ) || file.getFilePath();
-		} else {
-			superclassName = undefined;
-		}
-	}
-
-	return { superclassName, superclassPath };
-}
-
-
-/**
- * Helper to determine if a string of text is a valid JavaScript identifier.
- */
-function isValidIdentifier( text: string ) {
-	return /^[\w$]+$/.test( text );
-}
-
-/**
- * Finds the import path for the given `identifier`.
- *
- * For example, if we were looking for the identifier 'MyClass' in the following
- * list of imports:
- *
- *     import { Something } from './somewhere';
- *     import { MyClass } from './my-class';
- *
- * Then the method would return 'absolute/path/to/my-class.js';
- *
- * If there is no import for `identifier`, the method returns `null`.
- */
-function findImportPathForIdentifier(
-	sourceFile: SourceFile,
-	identifier: string
-): string | null {
-	const importWithIdentifier = sourceFile
-		.getImportDeclarations()
-		.find( ( importDeclaration: ImportDeclaration ) => {
-			const hasNamedImport = importDeclaration.getNamedImports()
-				.map( ( namedImport: ImportSpecifier ) => namedImport.getName() )
-				.includes( identifier );
-
-			const defaultImport = importDeclaration.getDefaultImport();
-			const hasDefaultImport = !!defaultImport && defaultImport.getText() === identifier;
-
-			return hasNamedImport || hasDefaultImport;
-		} );
-
-	if( importWithIdentifier ) {
-		const moduleSpecifier = importWithIdentifier.getModuleSpecifier().getLiteralValue();
-
-		// Return absolute path to the module, based on the source file that the
-		// import was found
-		const importPath = path.resolve( sourceFile.getDirectory().getPath(), moduleSpecifier + '.js' );
-		return importPath.replace( /\\/g, '/' );  // normalize to forward slashes for windows to be consistent with ts-simple-ast
-
-	} else {
-		return null;
-	}
 }
 
 
 /**
  * Parses the method names from the class into a Set of strings.
  */
-function parseMethods( fileClass: ClassDeclaration ): Set<string> {
+function getMethodNames( fileClass: ClassDeclaration ): Set<string> {
 	return fileClass.getMethods()
 		.reduce( ( methods: Set<string>, method: MethodDeclaration ) => {
 			return methods.add( method.getName() );
 		}, new Set<string>() );
+}
+
+
+/**
+ * Retrieves the list of propertyNames used in the class. This may also include
+ * method names (which are technically properties), which we'll filter out later.
+ */
+function getPropertyNames( fileClass: ClassDeclaration ) {
+	const existingPropertyDeclarations = parsePropertyDeclarations( fileClass );  // in case we are actually parsing a TypeScript class with existing declarations
+	const propertyAccesses = parsePropertyAccesses( fileClass );
+	const destructuringUsesOfProperties = parseDestructuringThisAssignments( fileClass );
+	const propertyAccessesOfThisAssignedVars = parsePropertyAccessesOfThisAssignedVars( fileClass );
+
+	return union(
+		existingPropertyDeclarations,
+		propertyAccesses,
+		destructuringUsesOfProperties,
+		propertyAccessesOfThisAssignedVars
+	);
 }
 
 
@@ -214,18 +143,74 @@ function parsePropertyAccesses( fileClass: ClassDeclaration ): Set<string> {
 			return props.add( prop.getName() );
 		}, new Set<string>() );
 
+	return propNamesSet;
+}
+
+
+/**
+ * Parses any object destructuring statements of the form:
+ *
+ *     var { a, b } = this;
+ *
+ * And returns Set( [ 'a', 'b' ] ) in this case.
+ */
+function parseDestructuringThisAssignments( fileClass: ClassDeclaration ): Set<string> {
 	// Second, find any `var { a, b } = this` statements
-	const destructuredPropsSet = fileClass
+	const destructuredProps = fileClass
 		.getDescendantsOfKind( SyntaxKind.VariableDeclaration )
 		.filter( ( varDec: VariableDeclaration ) => {
 			return varDec.compilerNode.name.kind === SyntaxKind.ObjectBindingPattern;
-		} )
+		} );
+
+	return destructuredProps
 		.reduce( ( propNames: Set<string>, varDec: VariableDeclaration ) => {
 			const destructuredPropNames = parseDestructuredProps( varDec.compilerNode.name as ts.ObjectBindingPattern );
 			destructuredPropNames.forEach( propName => propNames.add( propName ) );
 
 			return propNames;
 		}, new Set<string>() );
+}
 
-	return union( propNamesSet, destructuredPropsSet );
+
+/**
+ * Parses property accesses of variables that are assigned to the `this`
+ * keyword.
+ *
+ * For example:
+ *
+ *     var that = this;
+ *
+ *     that.someProp1 = 1;
+ *     that.someProp2 = 2;
+ *
+ * In the above code, the Set( [ 'someProp1', 'someProp2' ] ) is returned
+ */
+function parsePropertyAccessesOfThisAssignedVars(
+	fileClass: ClassDeclaration
+): Set<string> {
+	const methods = fileClass.getMethods();
+
+	return methods.reduce( ( propNames: Set<string>, method: MethodDeclaration ) => {
+		const thisVarDeclarations = method
+			.getDescendantsOfKind( SyntaxKind.VariableDeclaration )
+			.filter( isThisReferencingVar );
+
+		// Get the array of identifiers assigned to `this`. Ex: [ 'that', 'self' ]
+		const thisVarIdentifiers = thisVarDeclarations
+			.map( ( thisVarDec: VariableDeclaration ) => thisVarDec.getName() );
+
+		thisVarIdentifiers.forEach( ( thisVarIdentifier: string ) => {
+			// Get the properties accessed from the `this` identifiers (i.e. from
+			// 'that', 'self', etc.)
+			const propNamesAccessedFromIdentifier = method
+				.getDescendantsOfKind( SyntaxKind.PropertyAccessExpression )
+				.filter( propertyAccessWithObjFilter( thisVarIdentifier ) )
+				.map( ( p: PropertyAccessExpression ) => p.getName() );
+
+			propNamesAccessedFromIdentifier
+				.forEach( ( propName: string ) => propNames.add( propName ) );
+		} );
+
+		return propNames;
+	}, new Set<string>() );
 }

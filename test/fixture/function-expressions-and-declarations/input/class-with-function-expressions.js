@@ -1,4 +1,4 @@
-class ClassWithFunctionExpression {
+class ClassWithFunctionExpressions {
 
 	myMethod() {
 		var that = this;
