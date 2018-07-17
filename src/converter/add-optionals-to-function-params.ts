@@ -67,9 +67,11 @@ function addOptionalsToClassConstructors( sourceFile: SourceFile ) {
 			}, numParams );
 
 		// Mark all parameters greater than the minNumberOfCallArgs as
-		// optional
+		// optional (if it's not a rest parameter)
 		for( let i = minNumberOfCallArgs; i < numParams; i++ ) {
-			constructorFnParams[ i ].setHasQuestionToken( true );
+			if( !constructorFnParams[ i ].isRestParameter() ) {
+				constructorFnParams[ i ].setHasQuestionToken( true );
+			}
 		}
 	} );
 }
@@ -99,10 +101,13 @@ function addOptionalsToFunctionDeclarationsAndMethods( sourceFile: SourceFile ) 
 				return Math.min( minCallArgs, call.getArguments().length );
 			}, numParams );
 
+
 		// Mark all parameters greater than the minNumberOfCallArgs as
-		// optional
+		// optional (if it's not a rest parameter)
 		for( let i = minNumberOfCallArgs; i < numParams; i++ ) {
-			fnParams[ i ].setHasQuestionToken( true );
+			if( !fnParams[ i ].isRestParameter() ) {
+				fnParams[ i ].setHasQuestionToken( true );
+			}
 		}
 	} );
 }
