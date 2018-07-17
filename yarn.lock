@@ -180,9 +180,9 @@ class-utils@^0.3.5:
     isobject "^3.0.0"
     static-extend "^0.1.1"
 
-code-block-writer@^7.2.0:
-  version "7.2.0"
-  resolved "https://registry.yarnpkg.com/code-block-writer/-/code-block-writer-7.2.0.tgz#17a57b080e64898a82e3045df7a472baec9f220e"
+code-block-writer@^7.2.1:
+  version "7.2.1"
+  resolved "https://registry.yarnpkg.com/code-block-writer/-/code-block-writer-7.2.1.tgz#c03073518fdb98d4d1a5bb46dcd60137958b5a3a"
 
 collection-visit@^1.0.0:
   version "1.0.0"
@@ -941,12 +941,12 @@ ts-node@^7.0.0:
     source-map-support "^0.5.6"
     yn "^2.0.0"
 
-ts-simple-ast@^12.5.1:
-  version "12.5.1"
-  resolved "https://registry.yarnpkg.com/ts-simple-ast/-/ts-simple-ast-12.5.1.tgz#04fb9d91401156e710ddbc22fd06f7c555299515"
+ts-simple-ast@^12.6.2:
+  version "12.6.2"
+  resolved "https://registry.yarnpkg.com/ts-simple-ast/-/ts-simple-ast-12.6.2.tgz#9fc7bd04320ae475979f6542b6af9b3f2e324b2a"
   dependencies:
     "@dsherret/to-absolute-glob" "^2.0.2"
-    code-block-writer "^7.2.0"
+    code-block-writer "^7.2.1"
     fs-extra "^6.0.1"
     glob-parent "^3.1.0"
     globby "^8.0.1"

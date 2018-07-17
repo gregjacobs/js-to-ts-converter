@@ -8,6 +8,10 @@ The utility performs the following transformations:
 1. Renames `.js` files to `.ts`
 2. Adds property declarations to ES6 classes so that they are compilable by the
    TypeScript compiler (see below).
+3. Any function calls that provide fewer arguments than the declared parameters
+   in the function will cause the remaining parameters to be marked as optional
+   for that function. This solves TS errors like "Expected 3 arguments, but 
+   got 2"
 
 For #2 above, the utility basically looks at any `this` property accessed by a 
 JS class, and fills in the appropriate TypeScript property declarations. Take 

@@ -29,10 +29,17 @@ describe( 'convert()', () => {
 	} );
 
 
-	it( `should replace function expressions used within a class with arrow 
-	     functions, and should remove any pre-arrow-function 'var this = that'`,
+	it( `should handle 'var this = that' by adding 'that.xyz' as a class
+	     property declaration`,
 	() => {
 		runTest( `${__dirname}/fixture/function-expressions-and-declarations` );
+	} );
+
+
+	it( `should make function parameters optional when call sites are found to
+	     supply fewer arguments than there are parameters`,
+	() => {
+		runTest( `${__dirname}/fixture/function-calls-with-fewer-args-than-params` );
 	} );
 
 } );
