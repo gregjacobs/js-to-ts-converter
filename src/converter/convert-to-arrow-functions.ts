@@ -40,6 +40,7 @@ export function convertToArrowFunctions( tsAstProject: Project ): Project {
  *    var something = ( a, b ) => { ... }
  */
 function replaceFunctionExpressions( classDeclaration: ClassDeclaration ) {
+	const sourceFile = classDeclaration.getSourceFile();  // for debugging info
 	const className = classDeclaration.getName();
 	const functionExpressions = classDeclaration.getDescendantsOfKind( SyntaxKind.FunctionExpression );
 	const functionExpressionsText = functionExpressions.map( fe => fe.getFullText() );  // for debugging, which may be needed after some function expressions have been replaced
@@ -58,8 +59,9 @@ function replaceFunctionExpressions( classDeclaration: ClassDeclaration ) {
 		} catch( error ) {
 			throw new TraceError( `
 				An error occurred while trying to replace a function expression
-				with an arrow function. Was processing class ${className}, and
-				looking at a function expression with text:
+				with an arrow function. Was processing class ${className} in
+				file '${sourceFile.getFullText()}', and was looking at a 
+				function expression with the text:
 				
 				${functionExpressionsText[ i ]}
 			`.trim().replace( /^\t*/gm, '' ), error );
