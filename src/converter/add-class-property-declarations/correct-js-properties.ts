@@ -1,4 +1,4 @@
-import { JsClass } from "../model/js-class";
+import { JsClass } from "../../model/js-class";
 import { Graph, alg } from "graphlib";
 
 /**

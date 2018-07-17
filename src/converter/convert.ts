@@ -1,52 +1,12 @@
-import Project, { ClassInstancePropertyTypes, PropertyDeclaration, PropertyDeclarationStructure, Scope } from "ts-simple-ast";
-import { correctJsProperties } from "./correct-js-properties";
-import { parseJsClasses } from "./parse-js-classes";
+import Project from "ts-simple-ast";
+import { addClassPropertyDeclarations } from "./add-class-property-declarations/add-class-property-declarations";
 
 /**
  * Converts the source .js code to .ts
  */
 export function convert( tsAstProject: Project ): Project {
-	// Parse the JS classes for all of the this.xyz properties that they use
-	const jsClasses = parseJsClasses( tsAstProject );
-
-	// Correct the JS classes' properties for superclass/subclass relationships
-	// (essentially remove properties from subclasses that are defined by their
-	// superclasses)
-	const propertiesCorrectedJsClasses = correctJsProperties( jsClasses );
-
-	// Fill in field definitions for each of the classes
-	propertiesCorrectedJsClasses.forEach( jsClass => {
-		const sourceFile = tsAstProject.getSourceFileOrThrow( jsClass.path );
-
-		const classDeclaration = sourceFile.getClassOrThrow( jsClass.name! );
-		const jsClassProperties = jsClass.properties;
-
-		// If the utility was run against a TypeScript codebase, we should not
-		// fill in property declarations for properties that are already
-		// declared in the class. However, we *should* fill in any missing
-		// declarations. Removing any already-declared declarations from the
-		// jsClassProperties.
-		const currentPropertyDeclarations = classDeclaration.getInstanceProperties()
-			.reduce( ( props: Set<string>, prop: ClassInstancePropertyTypes ) => {
-				const propName = prop.getName();
-				return propName ? props.add( propName ) : props;
-			}, new Set<string>() );
-
-		const undeclaredProperties = [ ...jsClassProperties ]
-			.filter( ( propName: string ) => !currentPropertyDeclarations.has( propName ) );
-
-		// Add all currently-undeclared properties
-		const propertyDeclarations = undeclaredProperties.map( propertyName => {
-			return {
-				name: propertyName,
-				type: 'any',
-				scope: Scope.Public
-			} as PropertyDeclarationStructure;
-		} );
-
-		classDeclaration.insertProperties( 0, propertyDeclarations )
-	} );
-
+	// Fill in PropertyDeclarations for properties used by ES6 classes
+	tsAstProject = addClassPropertyDeclarations( tsAstProject );
 
 	// Rename .js files to .ts files
 	tsAstProject.getSourceFiles().forEach( sourceFile => {

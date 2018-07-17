@@ -51,8 +51,20 @@ class Sub extends Super {
 }
 ```
 
+Note: properties used when `this` is assigned to another variable are also 
+found for purposes of creating property declarations. Example:
 
-The goal of this utility was to simply make the `.js` code compilable under the
+```
+myMethod() {
+    var that = this;
+    
+    that.something;  // <-- 'something' parsed as a class property
+}
+```
+
+## Goal
+
+The goal of this utility is to simply make the `.js` code compilable under the
 TypeScript compiler, so simply adding the property declarations typed as `any` 
 was the quickest option there. The utility may look at property initializers in 
 the future to determine a better type.

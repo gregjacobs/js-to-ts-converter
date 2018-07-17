@@ -1,10 +1,10 @@
 import Project, { ts, ClassDeclaration, ClassInstancePropertyTypes, ImportDeclaration, ImportSpecifier, MethodDeclaration, Node, PropertyAccessExpression, SourceFile, SyntaxKind, VariableDeclaration } from "ts-simple-ast";
-import { JsClass } from "../model/js-class";
-import { difference, union } from "../util/set-utils";
-import { parseDestructuredProps } from "../util/parse-destructured-props";
-import { parseSuperclassNameAndPath } from "../util/parse-superclass-name-and-path";
-import { isThisReferencingVar } from "../util/is-this-referencing-var";
-import { propertyAccessWithObjFilter } from "../util/is-property-access-with-obj";
+import { JsClass } from "../../model/js-class";
+import { difference, union } from "../../util/set-utils";
+import { parseDestructuredProps } from "../../util/parse-destructured-props";
+import { parseSuperclassNameAndPath } from "../../util/parse-superclass-name-and-path";
+import { isThisReferencingVar } from "../../util/is-this-referencing-var";
+import { propertyAccessWithObjFilter } from "../../util/is-property-access-with-obj";
 
 /**
  * Parses the classes out of each .js file in the SourceFilesCollection, and
