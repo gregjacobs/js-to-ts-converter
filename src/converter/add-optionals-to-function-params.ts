@@ -1,7 +1,7 @@
-import Project, { CallExpression, ClassDeclaration, FunctionDeclaration, MethodDeclaration, NewExpression, Node, ParameterDeclaration, SourceFile, SyntaxKind, TypeGuards } from "ts-simple-ast";
+import Project, { CallExpression, ClassDeclaration, ConstructorDeclaration, FunctionDeclaration, MethodDeclaration, NewExpression, Node, SourceFile, SyntaxKind } from "ts-simple-ast";
 
 type NameableFunction = FunctionDeclaration | MethodDeclaration;
-
+type FunctionTransformTarget = NameableFunction | ConstructorDeclaration;
 
 /**
  * Adds the question token to function/method/constructor parameters that are
@@ -22,94 +22,104 @@ type NameableFunction = FunctionDeclaration | MethodDeclaration;
  *     function myFn( arg1, arg2, arg3? ) {   // <-- arg3 marked as optional
  *         // ...
  *     }
+ *
+ * Note: Just calling the language service to look up references takes a lot of
+ * time. Might have to optimize this somehow in the future.
  */
 export function addOptionalsToFunctionParams( tsAstProject: Project ): Project {
 	const sourceFiles = tsAstProject.getSourceFiles();
 
-	sourceFiles.forEach( ( sourceFile: SourceFile ) => {
-		addOptionalsToClassConstructors( sourceFile );
-		addOptionalsToFunctionDeclarationsAndMethods( sourceFile );
-	} );
+	const constructorMinArgsMap = parseClassConstructorCalls( sourceFiles );
+	const functionsMinArgsMap = parseFunctionAndMethodCalls( sourceFiles );
+
+	addOptionals( constructorMinArgsMap );
+	addOptionals( functionsMinArgsMap );
 
 	return tsAstProject;
 }
 
 
 /**
- * Handles ClassDeclarations by looking for the call sites of those classes'
- * constructors and figuring out if any parameters should be marked as optional
- * based on fewer arguments being provided than there are parameters.
+ * Finds the call sites of each ClassDeclaration's constructor in order to
+ * determine if any of its parameters should be marked as optional.
+ *
+ * Returns a Map keyed by ClassDeclaration which contains the minimum number of
+ * arguments passed to that class's constructor.
+ *
+ * Actually marking the parameters as optional is done in a separate phase.
  */
-function addOptionalsToClassConstructors( sourceFile: SourceFile ) {
-	const classes = sourceFile.getDescendantsOfKind( SyntaxKind.ClassDeclaration );
+function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<ConstructorDeclaration, number> {
+	const constructorMinArgsMap = new Map<ConstructorDeclaration, number>();
 
-	classes.forEach( ( classDeclaration: ClassDeclaration ) => {
-		const constructorFns = classDeclaration.getConstructors() || [];
-		const constructorFn = constructorFns[ 0 ];  // only grab the first since we're converting JavaScript
+	sourceFiles.forEach( ( sourceFile: SourceFile ) => {
+		const classes = sourceFile.getDescendantsOfKind( SyntaxKind.ClassDeclaration );
 
-		// If there is no constructor function for this class, then nothing to do
-		if( !constructorFn ) {
-			return;
-		}
+		classes.forEach( ( classDeclaration: ClassDeclaration ) => {
+			const constructorFns = classDeclaration.getConstructors() || [];
+			const constructorFn = constructorFns.length > 0 ? constructorFns[ 0 ] : undefined;  // only grab the first since we're converting JavaScript
 
-		const constructorFnParams = constructorFn.getParameters();
-		const numParams = constructorFnParams.length;
-
-		const referencedNodes = classDeclaration.findReferencesAsNodes();
-
-		const callsToConstructor = referencedNodes
-			.map( ( node: Node ) => node.getFirstAncestorByKind( SyntaxKind.NewExpression ) )
-			.filter( ( node ): node is NewExpression => !!node );
-
-		const minNumberOfCallArgs = callsToConstructor
-			.reduce( ( minCallArgs: number, call: NewExpression ) => {
-				return Math.min( minCallArgs, call.getArguments().length );
-			}, numParams );
-
-		// Mark all parameters greater than the minNumberOfCallArgs as
-		// optional (if it's not a rest parameter)
-		for( let i = minNumberOfCallArgs; i < numParams; i++ ) {
-			if( !constructorFnParams[ i ].isRestParameter() ) {
-				constructorFnParams[ i ].setHasQuestionToken( true );
+			// If there is no constructor function for this class, then nothing to do
+			if( !constructorFn ) {
+				return;
 			}
-		}
+
+			const constructorFnParams = constructorFn.getParameters();
+			const numParams = constructorFnParams.length;
+
+			const referencedNodes = classDeclaration.findReferencesAsNodes();
+
+			const callsToConstructor = referencedNodes
+				.map( ( node: Node ) => node.getFirstAncestorByKind( SyntaxKind.NewExpression ) )
+				.filter( ( node ): node is NewExpression => !!node );
+
+			const minNumberOfCallArgs = callsToConstructor
+				.reduce( ( minCallArgs: number, call: NewExpression ) => {
+					return Math.min( minCallArgs, call.getArguments().length );
+				}, numParams );
+
+			constructorMinArgsMap.set( constructorFn, minNumberOfCallArgs );
+		} );
 	} );
+
+	return constructorMinArgsMap;
 }
 
 
 /**
- * Handles FunctionDeclarations and MethodDeclarations by looking for the call
- * sites of those functions/methods and figuring out if any parameters should be
- * marked as optional based on fewer arguments being provided than there are
- * parameters.
+ * Finds the call sites of each FunctionDeclaration or MethodDeclaration in
+ * order to determine if any of its parameters should be marked as optional.
+ *
+ * Returns a Map keyed by FunctionDeclaration or MethodDeclaration which contains
+ * the minimum number of arguments passed to that function/method.
+ *
+ * Actually marking the parameters as optional is done in a separate phase.
  */
-function addOptionalsToFunctionDeclarationsAndMethods( sourceFile: SourceFile ) {
-	const fns = getFunctionsAndMethods( sourceFile );
+function parseFunctionAndMethodCalls( sourceFiles: SourceFile[] ): Map<NameableFunction, number> {
+	const functionsMinArgsMap = new Map<NameableFunction, number>();
 
-	fns.forEach( ( fn: NameableFunction ) => {
-		const fnParams = fn.getParameters();
-		const numParams = fnParams.length;
+	sourceFiles.forEach( ( sourceFile: SourceFile ) => {
+		const fns = getFunctionsAndMethods( sourceFile );
 
-		const referencedNodes = fn.findReferencesAsNodes();
+		fns.forEach( ( fn: NameableFunction ) => {
+			const fnParams = fn.getParameters();
+			const numParams = fnParams.length;
 
-		const callsToFunction = referencedNodes
-			.map( ( node: Node ) => node.getFirstAncestorByKind( SyntaxKind.CallExpression ) )
-			.filter( ( node ): node is CallExpression => !!node );
+			const referencedNodes = fn.findReferencesAsNodes();
 
-		const minNumberOfCallArgs = callsToFunction
-			.reduce( ( minCallArgs: number, call: CallExpression ) => {
-				return Math.min( minCallArgs, call.getArguments().length );
-			}, numParams );
+			const callsToFunction = referencedNodes
+				.map( ( node: Node ) => node.getFirstAncestorByKind( SyntaxKind.CallExpression ) )
+				.filter( ( node ): node is CallExpression => !!node );
 
+			const minNumberOfCallArgs = callsToFunction
+				.reduce( ( minCallArgs: number, call: CallExpression ) => {
+					return Math.min( minCallArgs, call.getArguments().length );
+				}, numParams );
 
-		// Mark all parameters greater than the minNumberOfCallArgs as
-		// optional (if it's not a rest parameter)
-		for( let i = minNumberOfCallArgs; i < numParams; i++ ) {
-			if( !fnParams[ i ].isRestParameter() ) {
-				fnParams[ i ].setHasQuestionToken( true );
-			}
-		}
+			functionsMinArgsMap.set( fn, minNumberOfCallArgs );
+		} );
 	} );
+
+	return functionsMinArgsMap;
 }
 
 
@@ -124,4 +134,48 @@ function getFunctionsAndMethods(
 		sourceFile.getDescendantsOfKind( SyntaxKind.FunctionDeclaration ),
 		sourceFile.getDescendantsOfKind( SyntaxKind.MethodDeclaration )
 	);
+}
+
+
+
+/**
+ * Marks parameters of class constructors / methods / functions as optional
+ * based on the minimum number of arguments passed in at its call sites.
+ *
+ * Ex:
+ *
+ *     class SomeClass {
+ *         constructor( arg1, arg2 ) {}
+ *     }
+ *     new SomeClass( 1 );  // no arg2
+ *
+ *     function myFn( arg1, arg2 ) {}
+ *     myFn();  // no args
+ *
+ *
+ * Output class and function:
+ *
+ *     class SomeClass {
+ *         constructor( arg1, arg2? ) {}  // <-- arg2 marked as optional
+ *     }
+ *
+ *     function myFn( arg1?, arg2? ) {}   // <-- arg1 and arg2 marked as optional
+ */
+function addOptionals( minArgsMap: Map<FunctionTransformTarget, number> ) {
+	const fns = minArgsMap.keys();
+
+	for( const fn of fns ) {
+		const fnParams = fn.getParameters();
+
+		const numParams = fnParams.length;
+		const minNumberOfCallArgs = minArgsMap.get( fn )!;
+
+		// Mark all parameters greater than the minNumberOfCallArgs as
+		// optional (if it's not a rest parameter)
+		for( let i = minNumberOfCallArgs; i < numParams; i++ ) {
+			if( !fnParams[ i ].isRestParameter() ) {
+				fnParams[ i ].setHasQuestionToken( true );
+			}
+		}
+	}
 }
