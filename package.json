@@ -1,6 +1,6 @@
 {
 	"name": "js-to-ts-converter",
-	"version": "0.7.1",
+	"version": "0.7.2",
 	"description": "Small utility to rename .js->.ts, and convert ES6 classes to TypeScript classes by filling in property declarations. See readme for more details.",
 	"keywords": [
 		"typescript",
