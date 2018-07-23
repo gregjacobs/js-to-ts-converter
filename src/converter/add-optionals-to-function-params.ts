@@ -171,10 +171,12 @@ function addOptionals( minArgsMap: Map<FunctionTransformTarget, number> ) {
 		const minNumberOfCallArgs = minArgsMap.get( fn )!;
 
 		// Mark all parameters greater than the minNumberOfCallArgs as
-		// optional (if it's not a rest parameter)
+		// optional (if it's not a rest parameter or already has a default value)
 		for( let i = minNumberOfCallArgs; i < numParams; i++ ) {
-			if( !fnParams[ i ].isRestParameter() ) {
-				fnParams[ i ].setHasQuestionToken( true );
+			const param = fnParams[ i ];
+
+			if( !param.isRestParameter() && !param.hasInitializer() ) {
+				param.setHasQuestionToken( true );
 			}
 		}
 	}

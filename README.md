@@ -119,6 +119,9 @@ npm install --global js-to-ts-converter
 js-to-ts-converter path/to/js/files
 ```
 
+
+
+
 ## Running the Utility from Node
 
 TypeScript: 
