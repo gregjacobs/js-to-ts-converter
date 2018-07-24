@@ -14,6 +14,7 @@ export function convert( tsAstProject: Project ): Project {
 	tsAstProject.getSourceFiles().forEach( sourceFile => {
 		const dir = sourceFile.getDirectoryPath();
 		const basename = sourceFile.getBaseNameWithoutExtension();
+
 		sourceFile.move( `${dir}/${basename}.ts` );
 	} );
 
@@ -27,9 +28,9 @@ export function convert( tsAstProject: Project ): Project {
 	// Service to work.
 	tsAstProject = addOptionalsToFunctionParams( tsAstProject );
 
-	// For some reason, we need to filter out node_modules again due to some
-	// .d.ts files that can be added by the language service. We don't want to
-	// save these
+	// Filter out any node_modules files as we don't want to modify these when
+	// we save the project. Also, some .d.ts files get included for some reason
+	// like tslib.d.ts, so we don't want to output that as well.
 	tsAstProject = filterOutNodeModules( tsAstProject );
 
 	// Even though the `tsAstProject` has been mutated (it is not an immutable

@@ -76,10 +76,17 @@ function findImportPathForIdentifier(
 
 		// Return absolute path to the module, based on the source file that the
 		// import was found
-		const importPath = path.resolve( sourceFile.getDirectory().getPath(), moduleSpecifier + '.js' );
-		return importPath.replace( /\\/g, '/' );  // normalize to forward slashes for windows to be consistent with ts-simple-ast
+		const moduleSpecifierFile = importWithIdentifier.getModuleSpecifierSourceFile();
+		if( moduleSpecifierFile ) {
+			const importPath = moduleSpecifierFile.getFilePath();
 
-	} else {
-		return null;
+			// don't include a superclass in node_modules
+			if( !/[\\\/]node_modules[\\\/]/.test( importPath ) ) {
+				return importPath.replace( /\\/g, '/' );  // normalize to forward slashes for windows to be consistent with ts-simple-ast
+			}
+		}
 	}
+
+	// Nothing found, return null
+	return null;
 }

@@ -1,4 +1,5 @@
 import Project, { IndentationText } from "ts-simple-ast";
+const glob = require( 'glob-all' );
 
 /**
  * Creates a ts-simple-ast Project by including the source files under the given
@@ -16,7 +17,14 @@ export function createTsAstProject( directory: string, options: {
 			indentationText: options.indentationText || IndentationText.Tab
 		}
 	} );
-	tsAstProject.addExistingSourceFiles( `${directory}/**/*.(js|ts)` );
+
+	const files = glob.sync( [
+		`${directory}/**/*.(js|ts)`,
+		`!node_modules/**/*`
+	] );
+	files.forEach( ( filePath: string ) => {
+		tsAstProject.addExistingSourceFile( filePath )
+	} );
 
 	return tsAstProject;
 }
