@@ -47,18 +47,26 @@ export function correctJsProperties( jsClasses: JsClass[] ): JsClass[] {
 			// didn't have the superclass's source file added to the project.
 			if( !jsClassHierarchyGraph.hasNode( jsClass.superclassId ) ) {
 				throw new Error( `
-					No JsClass exists for the superclass identifier: 
-					    '${jsClass.superclassId}'.
-					
-					Was processing class '${jsClass.name}' from path:
+					An error occurred while adding property declarations to class
+					'${jsClass.name}' in file:
 					    '${jsClass.path}'
 					
-					Was looking for a superclass named '${jsClass.superclassName}' in file:
+					Did not parse this class's superclass ('${jsClass.superclassName}') from file:
 					    '${jsClass.superclassPath}'
+					during the parse phase. 
 					
-					Make sure that the superclass's .js file is within the 
+					Make sure that this class's superclass's .js file is within the 
 					directory passed to this conversion utility, or otherwise 
-					there was a bug in creating the path/identifier to the superclass. 
+					there is a bug in this utility. Please report at:
+					    https://github.com/gregjacobs/js-to-ts-converter/issues
+					 
+					Debugging info:
+					
+					This class's graph ID: ${jsClass.id}
+					It's superclass's graph ID: ${jsClass.superclassId}
+					
+					Current IDs in the graph:
+					    ${jsClassHierarchyGraph.nodes().join( '\n    ' )}
 				`.replace( /^\t*/gm, '' ) );
 			}
 
