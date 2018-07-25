@@ -69,7 +69,8 @@ function findImportPathForIdentifier(
 		// Return absolute path to the module, based on the source file that the
 		// import was found
 		try {
-			return resolve.sync( moduleSpecifier, { basedir } );
+			return resolve.sync( moduleSpecifier, { basedir } )
+				.replace( /\\/g, '/' );  // normalize backslashes on Windows to forward slashes so we can compare directories with the paths that ts-simple-ast produces
 
 		} catch( error ) {
 			throw new TraceError( `
