@@ -43,7 +43,27 @@ export class JsClass {
 	 * one. If not, returns undefined.
 	 */
 	public get superclassId(): string | undefined {
-		return this.superclassName && `${this.superclassPath}_${this.superclassName}`;
+		if( this.isSuperclassInNodeModules() ) {
+			// If the superclass is in the node_modules folder, we'll
+			// essentially treat this JsClass as if it didn't have a superclass.
+			// See `isSuperclassInNodeModules()` jsdoc for details.
+			return undefined;
+
+		} else {
+			return this.superclassName && `${this.superclassPath}_${this.superclassName}`;
+		}
+	}
+
+
+	/**
+	 * Determines if the JsClass's superclass was found in the node_modules
+	 * directory (i.e. it extends from another package).
+	 *
+	 * If so, we're not going to try to understand a possibly ES5 module for
+	 * its properties, so we'll just stop processing at that point.
+	 */
+	public isSuperclassInNodeModules(): boolean {
+		return !!this.superclassPath && /[\\\/]node_modules[\\\/]/.test( this.superclassPath );
 	}
 
 }

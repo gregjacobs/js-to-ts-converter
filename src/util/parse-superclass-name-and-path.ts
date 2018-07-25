@@ -1,6 +1,8 @@
-import * as path from "path";
 import { isValidIdentifier } from "./is-valid-identifier";
-import { ClassDeclaration, ImportDeclaration, ImportSpecifier, SourceFile } from "ts-simple-ast";
+import { ClassDeclaration, SourceFile } from "ts-simple-ast";
+import { findImportForIdentifier } from "./find-import-for-identifier";
+const resolve = require( 'resolve' );
+const TraceError = require( 'trace-error' );
 
 /**
  * Given a file and ClassDeclaration, finds the name of the superclass and the
@@ -30,10 +32,10 @@ export function parseSuperclassNameAndPath(
 		//
 		//    class MyClass extends Mixin.mix( MixinClass1, MixinClass2 )
 		//
-		if( isValidIdentifier( superclassName ) ) {
-			superclassPath = findImportPathForIdentifier( file, superclassName ) || file.getFilePath();
+		if( !isValidIdentifier( superclassName ) ) {
+			superclassName = undefined;  // superclass was not a valid identifier
 		} else {
-			superclassName = undefined;
+			superclassPath = findImportPathForIdentifier( file, superclassName ) || file.getFilePath();
 		}
 	}
 
@@ -58,35 +60,31 @@ function findImportPathForIdentifier(
 	sourceFile: SourceFile,
 	identifier: string
 ): string | null {
-	const importWithIdentifier = sourceFile
-		.getImportDeclarations()
-		.find( ( importDeclaration: ImportDeclaration ) => {
-			const hasNamedImport = importDeclaration.getNamedImports()
-				.map( ( namedImport: ImportSpecifier ) => namedImport.getName() )
-				.includes( identifier );
-
-			const defaultImport = importDeclaration.getDefaultImport();
-			const hasDefaultImport = !!defaultImport && defaultImport.getText() === identifier;
-
-			return hasNamedImport || hasDefaultImport;
-		} );
+	const importWithIdentifier = findImportForIdentifier( sourceFile, identifier );
 
 	if( importWithIdentifier ) {
 		const moduleSpecifier = importWithIdentifier.getModuleSpecifier().getLiteralValue();
+		const basedir = sourceFile.getDirectoryPath();
 
 		// Return absolute path to the module, based on the source file that the
 		// import was found
-		const moduleSpecifierFile = importWithIdentifier.getModuleSpecifierSourceFile();
-		if( moduleSpecifierFile ) {
-			const importPath = moduleSpecifierFile.getFilePath();
+		try {
+			return resolve.sync( moduleSpecifier, { basedir } );
 
-			// don't include a superclass in node_modules
-			if( !/[\\\/]node_modules[\\\/]/.test( importPath ) ) {
-				return importPath.replace( /\\/g, '/' );  // normalize to forward slashes for windows to be consistent with ts-simple-ast
-			}
+		} catch( error ) {
+			throw new TraceError( `
+				An error occurred while trying to resolve the absolute path to
+				the import of identifier '${identifier}' in source file:
+				    '${sourceFile.getFilePath()}'
+				    
+				Was looking at the import with text:
+				    ${importWithIdentifier.getText()}   
+			`.trim().replace( /^\t*/gm, '' ), error );
 		}
 	}
 
 	// Nothing found, return null
 	return null;
 }
+
+

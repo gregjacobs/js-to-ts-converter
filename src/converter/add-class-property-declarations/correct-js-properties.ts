@@ -32,6 +32,14 @@ export function correctJsProperties( jsClasses: JsClass[] ): JsClass[] {
 	// Second, connect the subclasses to superclasses in the graph
 	jsClasses.forEach( jsClass => {
 		if( jsClass.superclassId ) {
+			// If we come across a JsClass whose superclass is in the node_modules
+			// directory (i.e. imported from another package), do not try to
+			// go into that package. We're not going to try to understand an ES5
+			// module
+			if( jsClass.isSuperclassInNodeModules() ) {
+				return;
+			}
+
 			// As a bit of error checking, make sure that we're not going to
 			// accidentally create a graph node by adding an edge to
 			// jsClass.superclassId. This would happen if we didn't figure out
@@ -39,9 +47,15 @@ export function correctJsProperties( jsClasses: JsClass[] ): JsClass[] {
 			// didn't have the superclass's source file added to the project.
 			if( !jsClassHierarchyGraph.hasNode( jsClass.superclassId ) ) {
 				throw new Error( `
-					correct-js-properties.ts: no JsClass exists for the 
-					superclass identifier: '${jsClass.superclassId}'.
-					Was processing JsClass '${jsClass.name}' from path '${jsClass.path}'.
+					No JsClass exists for the superclass identifier: 
+					    '${jsClass.superclassId}'.
+					
+					Was processing class '${jsClass.name}' from path:
+					    '${jsClass.path}'
+					
+					Was looking for a superclass named '${jsClass.superclassName}' in file:
+					    '${jsClass.superclassPath}'
+					
 					Make sure that the superclass's .js file is within the 
 					directory passed to this conversion utility, or otherwise 
 					there was a bug in creating the path/identifier to the superclass. 

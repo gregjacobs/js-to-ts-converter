@@ -18,9 +18,12 @@ export function createTsAstProject( directory: string, options: {
 		}
 	} );
 
+	// Do not include node_modules. We don't want to attempt to parse those as
+	// they may be ES5, and we also don't accidentally want to write out into
+	// the node_modules folder
 	const files = glob.sync( [
-		`${directory}/**/*.(js|ts)`,
-		`!node_modules/**/*`
+		`${directory}/**/*.+(js|ts)`,
+		`!${directory}/**/node_modules/**/*.+(js|ts)`
 	] );
 	files.forEach( ( filePath: string ) => {
 		tsAstProject.addExistingSourceFile( filePath )

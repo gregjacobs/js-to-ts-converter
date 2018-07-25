@@ -1,9 +1,9 @@
 import { Subject } from 'rxjs';
 
-export class MySubClass extends Subject {
+export class MySubClassWithSuperClassInNodeModules extends Subject {
 
 	mySuperclassMethod() {
-		this.mySuperClassProp = 10;
+		this.myProp = 10;
 	}
 
 }

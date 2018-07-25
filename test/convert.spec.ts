@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { createTsAstProject } from "../src/create-ts-ast-project";
 import { convert } from "../src/converter/convert";
 import { SourceFile } from "ts-simple-ast";
+import * as fs from "fs";
 
 describe( 'convert()', () => {
 
@@ -23,7 +24,7 @@ describe( 'convert()', () => {
 
 	it( `should not fill in property declarations for properties that are already
 	     declared (such as if the utility is run against a typescript codebase),
-	     but should fill in any missing properties that aren ot declared`,
+	     but should fill in any missing properties that are not declared`,
 	() => {
 		runTest( `${__dirname}/fixture/typescript-class` );
 	} );
@@ -59,6 +60,16 @@ describe( 'convert()', () => {
  *   `input` and `expected` subdirectories.
  */
 function runTest( absolutePath: string ) {
+	if( !fs.lstatSync( absolutePath ).isDirectory() ) {
+		throw new Error( 'The absolute path: ' + absolutePath + ' is not a directory' );
+	}
+	if( !fs.lstatSync( absolutePath + '/input' ).isDirectory() ) {
+		throw new Error( 'The absolute path: ' + absolutePath + '/input is not a directory' );
+	}
+	if( !fs.lstatSync( absolutePath + '/expected' ).isDirectory() ) {
+		throw new Error( 'The absolute path: ' + absolutePath + '/expected is not a directory' );
+	}
+
 	const inputFilesProject = createTsAstProject( absolutePath + '/input' );
 	const expectedFilesProject = createTsAstProject( absolutePath + '/expected' );
 
