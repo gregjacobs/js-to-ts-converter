@@ -1,6 +1,6 @@
 import Project from "ts-simple-ast";
 import { addClassPropertyDeclarations } from "./add-class-property-declarations/add-class-property-declarations";
-import { addOptionalsToFunctionParams } from "./add-optionals-to-function-params";
+import { addOptionalsToFunctionParams } from "./add-optionals-to-function-params/add-optionals-to-function-params";
 import { filterOutNodeModules } from "./filter-out-node-modules";
 
 /**

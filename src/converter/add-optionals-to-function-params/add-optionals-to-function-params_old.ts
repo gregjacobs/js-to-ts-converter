@@ -1,11 +1,11 @@
-import Project, { CallExpression, ClassDeclaration, ConstructorDeclaration, FunctionDeclaration, MethodDeclaration, NewExpression, Node, SourceFile, SyntaxKind } from "ts-simple-ast";
+import Project, { CallExpression, ClassDeclaration, ConstructorDeclaration, Expression, FunctionDeclaration, Identifier, MethodDeclaration, NewExpression, Node, SourceFile, SyntaxKind, TypeGuards } from "ts-simple-ast";
 
 type NameableFunction = FunctionDeclaration | MethodDeclaration;
 type FunctionTransformTarget = NameableFunction | ConstructorDeclaration;
 
 /**
- * Adds the question token to function/method/constructor parameters that are
- * deemed to be optional based on the calls to that function/method/constructor
+ * Adds the "optional" (question) token to function/method/constructor parameters
+ * that are deemed to be optional based on the calls to that function/method/constructor
  * in the codebase.
  *
  * For example, if we have:
@@ -15,7 +15,7 @@ type FunctionTransformTarget = NameableFunction | ConstructorDeclaration;
  *     }
  *
  *     myFn( 1, 2, 3 );  // all 3 args provided
- *     myFn( 1, 2 );     // <-- a call site only provides two arguments
+ *     myFn( 1, 2 );     // <-- a call site that only provides two arguments
  *
  * Then the resulting TypeScript function will be:
  *
@@ -27,8 +27,6 @@ type FunctionTransformTarget = NameableFunction | ConstructorDeclaration;
  * time. Might have to optimize this somehow in the future.
  */
 export function addOptionalsToFunctionParams( tsAstProject: Project ): Project {
-	const sourceFiles = tsAstProject.getSourceFiles();
-
 	const constructorMinArgsMap = parseClassConstructorCalls( sourceFiles );
 	const functionsMinArgsMap = parseFunctionAndMethodCalls( sourceFiles );
 
