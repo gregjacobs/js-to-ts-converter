@@ -5,6 +5,7 @@ import { parseDestructuredProps } from "../../util/parse-destructured-props";
 import { parseSuperclassNameAndPath } from "../../util/parse-superclass-name-and-path";
 import { isThisReferencingVar } from "../../util/is-this-referencing-var";
 import { propertyAccessWithObjFilter } from "../../util/is-property-access-with-obj";
+import logger from "../../logger/logger";
 
 /**
  * Parses the classes out of each .js file in the SourceFilesCollection, and
@@ -39,9 +40,12 @@ import { propertyAccessWithObjFilter } from "../../util/is-property-access-with-
  * by a superclass and a subclass should only be defined in the superclass.
  */
 export function parseJsClasses( tsAstProject: Project ): JsClass[] {
+	logger.verbose( "Parsing JS classes in the codebase..." );
 	const files = tsAstProject.getSourceFiles();
 
 	const jsClasses = files.reduce( ( classes: JsClass[], file: SourceFile ) => {
+		logger.debug( `Parsing classes in file: ${file.getFilePath()}` );
+
 		const fileClasses = parseFileClasses( file );
 		return classes.concat( fileClasses );
 	}, [] );
@@ -56,10 +60,12 @@ export function parseJsClasses( tsAstProject: Project ): JsClass[] {
 function parseFileClasses( sourceFile: SourceFile ): JsClass[] {
 	return sourceFile.getClasses().map( fileClass => {
 		const className = fileClass.getName();
+
+		logger.debug( `    Parsing class: ${className}` );
+
 		const { superclassName, superclassPath } = parseSuperclassNameAndPath( sourceFile, fileClass );
 		const methodNames = getMethodNames( fileClass );
 		const propertyNames = getPropertyNames( fileClass );
-
 		const propertiesMinusMethods = difference( propertyNames, methodNames );  // remove any method names from this Set
 
 		return new JsClass( {

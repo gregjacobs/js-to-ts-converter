@@ -1,14 +1,19 @@
 import * as path from 'path';
 import { createTsAstProject } from "./create-ts-ast-project";
 import { convert } from "./converter/convert";
-import Project from "ts-simple-ast";
+import Project, { IndentationText } from "ts-simple-ast";
+import { LogLevel } from "./logger";
+import logger from "./logger/logger";
 
 /**
  * Asynchronously converts the JavaScript files under the given `sourceFilesPath`
  * to TypeScript files.
  */
-export async function convertJsToTs( sourceFilesPath: string ): Promise<void> {
-	const convertedTsAstProject = doConvert( sourceFilesPath );
+export async function convertJsToTs( sourceFilesPath: string, options: {
+	indentationText?: IndentationText,
+	logLevel?: LogLevel
+} = {} ): Promise<void> {
+	const convertedTsAstProject = doConvert( sourceFilesPath, options );
 
 	// Save output files
 	return convertedTsAstProject.save();
@@ -18,8 +23,11 @@ export async function convertJsToTs( sourceFilesPath: string ): Promise<void> {
  * Synchronously converts the JavaScript files under the given `sourceFilesPath`
  * to TypeScript files.
  */
-export function convertJsToTsSync( sourceFilesPath: string ) {
-	const convertedTsAstProject = doConvert( sourceFilesPath );
+export function convertJsToTsSync( sourceFilesPath: string, options: {
+	indentationText?: IndentationText,
+	logLevel?: LogLevel
+} = {} ) {
+	const convertedTsAstProject = doConvert( sourceFilesPath, options );
 
 	// Save output files
 	convertedTsAstProject.saveSync();
@@ -30,9 +38,14 @@ export function convertJsToTsSync( sourceFilesPath: string ) {
  * Performs the actual conversion given a `sourceFilesPath`, and returning a
  * `ts-simple-ast` Project with the converted source files.
  */
-function doConvert( sourceFilesPath: string ): Project {
+function doConvert( sourceFilesPath: string, options: {
+	indentationText?: IndentationText,
+	logLevel?: LogLevel
+} = {} ): Project {
+	logger.setLogLevel( options.logLevel || 'verbose' );
+
 	const absolutePath = path.resolve( sourceFilesPath );
 
-	const tsAstProject = createTsAstProject( absolutePath );
+	const tsAstProject = createTsAstProject( absolutePath, options );
 	return convert( tsAstProject );
 }

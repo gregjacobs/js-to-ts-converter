@@ -1,6 +1,7 @@
 import Project, { ClassInstancePropertyTypes, PropertyDeclarationStructure, Scope } from "ts-simple-ast";
 import { parseJsClasses } from "./parse-js-classes";
 import { correctJsProperties } from "./correct-js-properties";
+import logger from "../../logger/logger";
 
 /**
  * Parses all source files looking for ES6 classes, and takes any `this`
@@ -36,6 +37,7 @@ export function addClassPropertyDeclarations( tsAstProject: Project ): Project {
 	// Fill in field definitions for each of the classes
 	propertiesCorrectedJsClasses.forEach( jsClass => {
 		const sourceFile = tsAstProject.getSourceFileOrThrow( jsClass.path );
+		logger.verbose( `    Updating class '${jsClass.name}' in '${sourceFile.getFilePath()}'` );
 
 		const classDeclaration = sourceFile.getClassOrThrow( jsClass.name! );
 		const jsClassProperties = jsClass.properties;
@@ -63,6 +65,7 @@ export function addClassPropertyDeclarations( tsAstProject: Project ): Project {
 			} as PropertyDeclarationStructure;
 		} );
 
+		logger.verbose( `        Adding property declarations for properties: '${undeclaredProperties.join( "', '" )}'` );
 		classDeclaration.insertProperties( 0, propertyDeclarations )
 	} );
 

@@ -1,5 +1,6 @@
 import { JsClass } from "../../model/js-class";
 import { Graph, alg } from "graphlib";
+import logger from "../../logger/logger";
 
 /**
  * After the graph of original {@link JsClass}es and their properties have been
@@ -22,6 +23,8 @@ import { Graph, alg } from "graphlib";
  * 4. Use the propertySets to create a new list of JsClasses
  */
 export function correctJsProperties( jsClasses: JsClass[] ): JsClass[] {
+	logger.debug( 'Building graph of class hierarchy to determine which class properties belong to superclasses/subclasses' );
+
 	const jsClassHierarchyGraph = new Graph();
 
 	// First, add all nodes to the graph
@@ -76,6 +79,7 @@ export function correctJsProperties( jsClasses: JsClass[] ): JsClass[] {
 
 	// the topological sort is going to put superclasses later in the returned
 	// array, so reverse it
+	logger.debug( 'Topologically sorting the graph in superclass->subclass order' );
 	const superclassToSubclassOrder = alg.topsort( jsClassHierarchyGraph ).reverse();
 
 	// Starting from superclass JsClass instances and walking down to subclass

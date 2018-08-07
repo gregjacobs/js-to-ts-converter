@@ -1,4 +1,5 @@
 import Project, { CallExpression, ClassDeclaration, ConstructorDeclaration, FunctionDeclaration, MethodDeclaration, NewExpression, Node, SourceFile, SyntaxKind } from "ts-simple-ast";
+import logger from "../logger/logger";
 
 type NameableFunction = FunctionDeclaration | MethodDeclaration;
 type FunctionTransformTarget = NameableFunction | ConstructorDeclaration;
@@ -27,11 +28,14 @@ type FunctionTransformTarget = NameableFunction | ConstructorDeclaration;
  * time. Might have to optimize this somehow in the future.
  */
 export function addOptionalsToFunctionParams( tsAstProject: Project ): Project {
+	logger.verbose( 'Beginning routine to mark function parameters as optional when calls exist that supply fewer args than parameters...' );
 	const sourceFiles = tsAstProject.getSourceFiles();
 
+	logger.verbose( 'Parsing function/method/constructor calls from codebase.' );
 	const constructorMinArgsMap = parseClassConstructorCalls( sourceFiles );
 	const functionsMinArgsMap = parseFunctionAndMethodCalls( sourceFiles );
 
+	logger.verbose( 'Marking parameters as optional' );
 	addOptionals( constructorMinArgsMap );
 	addOptionals( functionsMinArgsMap );
 
@@ -49,9 +53,11 @@ export function addOptionalsToFunctionParams( tsAstProject: Project ): Project {
  * Actually marking the parameters as optional is done in a separate phase.
  */
 function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<ConstructorDeclaration, number> {
+	logger.verbose( 'Finding all calls to class constructors...' );
 	const constructorMinArgsMap = new Map<ConstructorDeclaration, number>();
 
 	sourceFiles.forEach( ( sourceFile: SourceFile ) => {
+		logger.verbose( `    Processing classes in source file: ${sourceFile.getFilePath()}` );
 		const classes = sourceFile.getDescendantsOfKind( SyntaxKind.ClassDeclaration );
 
 		classes.forEach( ( classDeclaration: ClassDeclaration ) => {
@@ -63,6 +69,8 @@ function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<Constructo
 				return;
 			}
 
+			logger.verbose( `        Looking for calls to the constructor of class: '${classDeclaration.getName()}'` );
+
 			const constructorFnParams = constructorFn.getParameters();
 			const numParams = constructorFnParams.length;
 
@@ -72,10 +80,16 @@ function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<Constructo
 				.map( ( node: Node ) => node.getFirstAncestorByKind( SyntaxKind.NewExpression ) )
 				.filter( ( node ): node is NewExpression => !!node );
 
+			logger.debug( `        Found ${callsToConstructor.length} call(s) to the constructor` );
+
 			const minNumberOfCallArgs = callsToConstructor
 				.reduce( ( minCallArgs: number, call: NewExpression ) => {
 					return Math.min( minCallArgs, call.getArguments().length );
 				}, numParams );
+
+			if( callsToConstructor.length > 0 ) {
+				logger.debug( `        Constructor currently expects ${numParams} params. Call(s) to the constructor supply a minimum of ${minNumberOfCallArgs} args.` );
+			}
 
 			constructorMinArgsMap.set( constructorFn, minNumberOfCallArgs );
 		} );
@@ -95,12 +109,15 @@ function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<Constructo
  * Actually marking the parameters as optional is done in a separate phase.
  */
 function parseFunctionAndMethodCalls( sourceFiles: SourceFile[] ): Map<NameableFunction, number> {
+	logger.verbose( 'Finding all calls to functions/methods...' );
 	const functionsMinArgsMap = new Map<NameableFunction, number>();
 
 	sourceFiles.forEach( ( sourceFile: SourceFile ) => {
+		logger.verbose( `    Processing functions/methods in source file: ${sourceFile.getFilePath()}` );
 		const fns = getFunctionsAndMethods( sourceFile );
 
 		fns.forEach( ( fn: NameableFunction ) => {
+			logger.verbose( `        Looking for calls to the function: '${fn.getName()}'` );
 			const fnParams = fn.getParameters();
 			const numParams = fnParams.length;
 
@@ -110,10 +127,16 @@ function parseFunctionAndMethodCalls( sourceFiles: SourceFile[] ): Map<NameableF
 				.map( ( node: Node ) => node.getFirstAncestorByKind( SyntaxKind.CallExpression ) )
 				.filter( ( node ): node is CallExpression => !!node );
 
+			logger.debug( `        Found ${callsToFunction.length} call(s) to the function '${fn.getName()}'` );
+
 			const minNumberOfCallArgs = callsToFunction
 				.reduce( ( minCallArgs: number, call: CallExpression ) => {
 					return Math.min( minCallArgs, call.getArguments().length );
 				}, numParams );
+
+			if( callsToFunction.length > 0 ) {
+				logger.debug( `        Function currently expects ${numParams} params. Call(s) to the function/method supply a minimum of ${minNumberOfCallArgs} args.` );
+			}
 
 			functionsMinArgsMap.set( fn, minNumberOfCallArgs );
 		} );

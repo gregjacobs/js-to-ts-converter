@@ -3,6 +3,10 @@ import { createTsAstProject } from "../src/create-ts-ast-project";
 import { convert } from "../src/converter/convert";
 import { SourceFile } from "ts-simple-ast";
 import * as fs from "fs";
+import logger from "../src/logger/logger";
+
+// Minimal logging for tests
+logger.setLogLevel( 'error' );
 
 describe( 'convert()', () => {
 

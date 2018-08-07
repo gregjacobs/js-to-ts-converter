@@ -2,15 +2,18 @@ import Project from "ts-simple-ast";
 import { addClassPropertyDeclarations } from "./add-class-property-declarations/add-class-property-declarations";
 import { addOptionalsToFunctionParams } from "./add-optionals-to-function-params";
 import { filterOutNodeModules } from "./filter-out-node-modules";
+import logger from "../logger/logger";
 
 /**
  * Converts the source .js code to .ts
  */
 export function convert( tsAstProject: Project ): Project {
 	// Fill in PropertyDeclarations for properties used by ES6 classes
+	logger.info( 'Adding property declarations to JS Classes...' );
 	tsAstProject = addClassPropertyDeclarations( tsAstProject );
 
 	// Rename .js files to .ts files
+	logger.info( 'Renaming .js files to .ts' );
 	tsAstProject.getSourceFiles().forEach( sourceFile => {
 		const dir = sourceFile.getDirectoryPath();
 		const basename = sourceFile.getBaseNameWithoutExtension();
@@ -26,6 +29,7 @@ export function convert( tsAstProject: Project ): Project {
 	// than there are function parameters.
 	// NOTE: Must happen after .js -> .ts rename for the TypeScript Language
 	// Service to work.
+	logger.info( 'Making parameters optional for calls that supply fewer args than function parameters...' );
 	tsAstProject = addOptionalsToFunctionParams( tsAstProject );
 
 	// Filter out any node_modules files as we don't want to modify these when
