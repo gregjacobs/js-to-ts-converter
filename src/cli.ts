@@ -38,7 +38,7 @@ parser.addArgument( '--log-level', {
 const args = parser.parseArgs();
 const absolutePath = path.resolve( args.directory );
 
-logger.setLogLevel( resolveLogLevel( args.logLevel ) );
+logger.setLogLevel( resolveLogLevel( args.log_level ) );
 
 if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 	logger.error( `${absolutePath} is not a directory. Please provide a directory` );
@@ -48,7 +48,7 @@ if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 }
 
 const tsAstProject = createTsAstProject( absolutePath, {
-	indentationText: resolveIndentationText( args.indentationText )
+	indentationText: resolveIndentationText( args.indentation_text )
 } );
 
 // Print input files
