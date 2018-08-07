@@ -8,6 +8,16 @@ import logger from "../logger/logger";
  * Converts the source .js code to .ts
  */
 export function convert( tsAstProject: Project ): Project {
+	// Print input files
+	logger.info( 'Processing the following source files:' );
+	printSourceFilesList( tsAstProject, '  ' );
+
+	logger.info( `
+		Converting source files... This may take anywhere from a few minutes to 
+		tens of minutes or longer depending on how many files are being 
+		converted.
+	`.replace( /\t*/gm, '' ) );
+
 	// Fill in PropertyDeclarations for properties used by ES6 classes
 	logger.info( 'Adding property declarations to JS Classes...' );
 	tsAstProject = addClassPropertyDeclarations( tsAstProject );
@@ -37,8 +47,23 @@ export function convert( tsAstProject: Project ): Project {
 	// like tslib.d.ts, so we don't want to output that as well.
 	tsAstProject = filterOutNodeModules( tsAstProject );
 
+	// Print output files
+	logger.info( 'Outputting .ts files:' );
+	printSourceFilesList( tsAstProject, '  ' );
+
 	// Even though the `tsAstProject` has been mutated (it is not an immutable
 	// data structure), return it anyway to avoid the confusion of an output
 	// parameter.
 	return tsAstProject;
+}
+
+
+/**
+ * Private helper to print out the source files list in the given `astProject`
+ * to the console.
+ */
+function printSourceFilesList( astProject: Project, indent = '' ) {
+	astProject.getSourceFiles().forEach( sf => {
+		logger.info( `${indent}${sf.getFilePath()}` );
+	} );
 }

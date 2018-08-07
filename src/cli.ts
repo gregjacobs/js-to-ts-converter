@@ -3,10 +3,9 @@
 import * as path from "path";
 import * as fs from 'fs';
 
-import { convert } from "./converter/convert";
-import { createTsAstProject } from "./create-ts-ast-project";
-import Project, { IndentationText } from "ts-simple-ast";
+import { IndentationText } from "ts-simple-ast";
 import logger, { LogLevel, logLevels } from './logger';
+import { convertJsToTsSync } from "./js-to-ts-converter";
 
 
 const ArgumentParser = require('argparse').ArgumentParser;
@@ -36,9 +35,8 @@ parser.addArgument( '--log-level', {
 } );
 
 const args = parser.parseArgs();
-const absolutePath = path.resolve( args.directory );
+const absolutePath = path.resolve( args.directory.replace( /\/$/, '' ) );  // remove any trailing slash
 
-logger.setLogLevel( resolveLogLevel( args.log_level ) );
 
 if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 	logger.error( `${absolutePath} is not a directory. Please provide a directory` );
@@ -47,24 +45,11 @@ if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 	logger.info( `Processing directory: '${absolutePath}'` );
 }
 
-const tsAstProject = createTsAstProject( absolutePath, {
-	indentationText: resolveIndentationText( args.indentation_text )
+
+convertJsToTsSync( absolutePath, {
+	indentationText: resolveIndentationText( args.indentation_text ),
+	logLevel: resolveLogLevel( args.log_level )
 } );
-
-// Print input files
-logger.log( 'Processing the following source files:' );
-printSourceFilesList( tsAstProject, '  ' );
-
-// Convert
-logger.log( 'Converting source files. This may take anywhere from a few minutes to tens of minutes or longer depending on how many files are being converted due to the use of the TypeScript language service to look up function references...' );
-const convertedTsAstProject = convert( tsAstProject );
-
-// Print output files
-logger.log( 'Outputting .ts files:' );
-printSourceFilesList( convertedTsAstProject, '  ' );
-
-// Save output files
-convertedTsAstProject.saveSync();
 
 
 /**
@@ -92,14 +77,4 @@ function resolveLogLevel( logLevelStr: string ): LogLevel {
 	}
 
 	return logLevelStr as LogLevel;
-}
-
-/**
- * Private helper to print out the source files list in the given `astProject`
- * to the console.
- */
-function printSourceFilesList( astProject: Project, indent = '' ) {
-	astProject.getSourceFiles().forEach( sf => {
-		logger.log( `${indent}${sf.getFilePath()}` );
-	} );
 }

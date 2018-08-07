@@ -1,4 +1,4 @@
-import Project, { ts, ClassDeclaration, ClassInstancePropertyTypes, ImportDeclaration, ImportSpecifier, MethodDeclaration, Node, PropertyAccessExpression, SourceFile, SyntaxKind, VariableDeclaration } from "ts-simple-ast";
+import Project, { ts, ClassDeclaration, ClassInstancePropertyTypes, MethodDeclaration, PropertyAccessExpression, SourceFile, SyntaxKind, VariableDeclaration } from "ts-simple-ast";
 import { JsClass } from "../../model/js-class";
 import { difference, union } from "../../util/set-utils";
 import { parseDestructuredProps } from "../../util/parse-destructured-props";
@@ -142,7 +142,7 @@ function parsePropertyAccesses( fileClass: ClassDeclaration ): Set<string> {
 	// First, find all of the `this.something` properties
 	const thisProps = fileClass
 		.getDescendantsOfKind( SyntaxKind.PropertyAccessExpression )
-		.filter( prop => prop.getExpression().getKind() === SyntaxKind.ThisKeyword );
+		.filter( ( prop: PropertyAccessExpression ) => prop.getExpression().getKind() === SyntaxKind.ThisKeyword );
 
 	const propNamesSet = thisProps
 		.reduce( ( props: Set<string>, prop: PropertyAccessExpression ) => {
