@@ -5,7 +5,11 @@ const winstonLogger = winston.createLogger( {
 	level: 'verbose',  // may be changed by Logger.setLogLevel()
 	transports: [
 		new winston.transports.Console( {
-			format: winston.format.simple()
+			format: winston.format.combine(
+				winston.format.colorize(),
+				winston.format.align(),
+				winston.format.printf(info => `${info.level}: ${info.message}`)
+			)
 		} )
 	]
 } );
