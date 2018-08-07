@@ -57,7 +57,7 @@ function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<Constructo
 	const constructorMinArgsMap = new Map<ConstructorDeclaration, number>();
 
 	sourceFiles.forEach( ( sourceFile: SourceFile ) => {
-		logger.verbose( `    Processing classes in source file: ${sourceFile.getFilePath()}` );
+		logger.verbose( `  Processing classes in source file: ${sourceFile.getFilePath()}` );
 		const classes = sourceFile.getDescendantsOfKind( SyntaxKind.ClassDeclaration );
 
 		classes.forEach( ( classDeclaration: ClassDeclaration ) => {
@@ -69,7 +69,7 @@ function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<Constructo
 				return;
 			}
 
-			logger.verbose( `        Looking for calls to the constructor of class: '${classDeclaration.getName()}'` );
+			logger.verbose( `    Looking for calls to the constructor of class: '${classDeclaration.getName()}'` );
 
 			const constructorFnParams = constructorFn.getParameters();
 			const numParams = constructorFnParams.length;
@@ -80,7 +80,7 @@ function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<Constructo
 				.map( ( node: Node ) => node.getFirstAncestorByKind( SyntaxKind.NewExpression ) )
 				.filter( ( node ): node is NewExpression => !!node );
 
-			logger.debug( `        Found ${callsToConstructor.length} call(s) to the constructor` );
+			logger.debug( `    Found ${callsToConstructor.length} call(s) to the constructor` );
 
 			const minNumberOfCallArgs = callsToConstructor
 				.reduce( ( minCallArgs: number, call: NewExpression ) => {
@@ -88,7 +88,7 @@ function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<Constructo
 				}, numParams );
 
 			if( callsToConstructor.length > 0 ) {
-				logger.debug( `        Constructor currently expects ${numParams} params. Call(s) to the constructor supply a minimum of ${minNumberOfCallArgs} args.` );
+				logger.debug( `    Constructor currently expects ${numParams} params. Call(s) to the constructor supply a minimum of ${minNumberOfCallArgs} args.` );
 			}
 
 			constructorMinArgsMap.set( constructorFn, minNumberOfCallArgs );
@@ -113,11 +113,11 @@ function parseFunctionAndMethodCalls( sourceFiles: SourceFile[] ): Map<NameableF
 	const functionsMinArgsMap = new Map<NameableFunction, number>();
 
 	sourceFiles.forEach( ( sourceFile: SourceFile ) => {
-		logger.verbose( `    Processing functions/methods in source file: ${sourceFile.getFilePath()}` );
+		logger.verbose( `  Processing functions/methods in source file: ${sourceFile.getFilePath()}` );
 		const fns = getFunctionsAndMethods( sourceFile );
 
 		fns.forEach( ( fn: NameableFunction ) => {
-			logger.verbose( `        Looking for calls to the function: '${fn.getName()}'` );
+			logger.verbose( `    Looking for calls to the function: '${fn.getName()}'` );
 			const fnParams = fn.getParameters();
 			const numParams = fnParams.length;
 
@@ -127,7 +127,7 @@ function parseFunctionAndMethodCalls( sourceFiles: SourceFile[] ): Map<NameableF
 				.map( ( node: Node ) => node.getFirstAncestorByKind( SyntaxKind.CallExpression ) )
 				.filter( ( node ): node is CallExpression => !!node );
 
-			logger.debug( `        Found ${callsToFunction.length} call(s) to the function '${fn.getName()}'` );
+			logger.debug( `    Found ${callsToFunction.length} call(s) to the function '${fn.getName()}'` );
 
 			const minNumberOfCallArgs = callsToFunction
 				.reduce( ( minCallArgs: number, call: CallExpression ) => {
@@ -135,7 +135,7 @@ function parseFunctionAndMethodCalls( sourceFiles: SourceFile[] ): Map<NameableF
 				}, numParams );
 
 			if( callsToFunction.length > 0 ) {
-				logger.debug( `        Function currently expects ${numParams} params. Call(s) to the function/method supply a minimum of ${minNumberOfCallArgs} args.` );
+				logger.debug( `    Function currently expects ${numParams} params. Call(s) to the function/method supply a minimum of ${minNumberOfCallArgs} args.` );
 			}
 
 			functionsMinArgsMap.set( fn, minNumberOfCallArgs );

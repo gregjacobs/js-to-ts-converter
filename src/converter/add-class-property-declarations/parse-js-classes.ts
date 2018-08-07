@@ -61,7 +61,7 @@ function parseFileClasses( sourceFile: SourceFile ): JsClass[] {
 	return sourceFile.getClasses().map( fileClass => {
 		const className = fileClass.getName();
 
-		logger.debug( `    Parsing class: ${className}` );
+		logger.debug( `  Parsing class: ${className}` );
 
 		const { superclassName, superclassPath } = parseSuperclassNameAndPath( sourceFile, fileClass );
 		const methodNames = getMethodNames( fileClass );

@@ -37,7 +37,7 @@ export function addClassPropertyDeclarations( tsAstProject: Project ): Project {
 	// Fill in field definitions for each of the classes
 	propertiesCorrectedJsClasses.forEach( jsClass => {
 		const sourceFile = tsAstProject.getSourceFileOrThrow( jsClass.path );
-		logger.verbose( `    Updating class '${jsClass.name}' in '${sourceFile.getFilePath()}'` );
+		logger.verbose( `  Updating class '${jsClass.name}' in '${sourceFile.getFilePath()}'` );
 
 		const classDeclaration = sourceFile.getClassOrThrow( jsClass.name! );
 		const jsClassProperties = jsClass.properties;
@@ -65,7 +65,7 @@ export function addClassPropertyDeclarations( tsAstProject: Project ): Project {
 			} as PropertyDeclarationStructure;
 		} );
 
-		logger.verbose( `        Adding property declarations for properties: '${undeclaredProperties.join( "', '" )}'` );
+		logger.verbose( `    Adding property declarations for properties: '${undeclaredProperties.join( "', '" )}'` );
 		classDeclaration.insertProperties( 0, propertyDeclarations )
 	} );
 
