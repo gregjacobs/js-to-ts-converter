@@ -8,6 +8,11 @@ import logger from "../logger/logger";
  * Converts the source .js code to .ts
  */
 export function convert( tsAstProject: Project ): Project {
+	if( tsAstProject.getSourceFiles().length === 0 ) {
+		logger.info( 'Found no source files to process. Exiting.' );
+		return tsAstProject;
+	}
+
 	// Print input files
 	logger.info( 'Processing the following source files:' );
 	printSourceFilesList( tsAstProject, '  ' );
