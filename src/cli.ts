@@ -22,6 +22,12 @@ parser.addArgument( '--indentation-text', {
 	choices: [ 'tab', 'twospaces', 'fourspaces', 'eightspaces' ],
 	defaultValue: 'tab'
 } );
+parser.addArgument( '--exclude', {
+	help: 'Glob patterns to exclude from being converted. Separate multiple patterns ' +
+	      'with a comma. The patterns must be valid for the "glob-all" npm ' +
+	      'package (https://www.npmjs.com/package/glob-all).\n' +
+	      'Example: --exclude="**/myFolder/**,**/*.jsx"'
+} );
 parser.addArgument( '--log-level', {
 	help: `
 		The level of logs to print to the console. From highest amount of \
@@ -48,7 +54,8 @@ if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 
 convertJsToTsSync( absolutePath, {
 	indentationText: resolveIndentationText( args.indentation_text ),
-	logLevel: resolveLogLevel( args.log_level )
+	logLevel: resolveLogLevel( args.log_level ),
+	excludePatterns: parseExcludePatterns( args.exclude )
 } );
 
 
@@ -77,4 +84,11 @@ function resolveLogLevel( logLevelStr: string ): LogLevel {
 	}
 
 	return logLevelStr as LogLevel;
+}
+
+
+function parseExcludePatterns( excludePatterns: string | undefined ): string[] {
+	if( !excludePatterns ) { return []; }
+
+	return excludePatterns.split( ',' );
 }
