@@ -35,7 +35,7 @@
 		"lodash": "^4.17.10",
 		"resolve": "^1.8.1",
 		"trace-error": "^0.0.7",
-		"ts-simple-ast": "^12.7.1",
+		"ts-simple-ast": "^14.2.0",
 		"typescript": "^2.9.2",
 		"winston": "^3.0.0"
 	},
