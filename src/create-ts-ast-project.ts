@@ -47,8 +47,7 @@ export function createTsAstProject( directory: string, options: {
 
 	// Finally, get the files and add to the TsAstProject
 	const files = glob.sync( filePatterns, {
-		follow: true,   // follow symlinks
-		realpath: true  // always return the real path when following symlinks
+		follow: true   // follow symlinks
 	} );
 	files
 		.filter( ( filePath: string ) => fs.statSync( filePath ).isFile() )  // don't take directories
