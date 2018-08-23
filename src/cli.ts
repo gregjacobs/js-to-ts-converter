@@ -22,10 +22,18 @@ parser.addArgument( '--indentation-text', {
 	choices: [ 'tab', 'twospaces', 'fourspaces', 'eightspaces' ],
 	defaultValue: 'tab'
 } );
+parser.addArgument( '--include', {
+	help: 'Glob patterns to include in the conversion. Separate multiple patterns ' +
+	      'with a comma. The patterns must be valid for the "glob-all" npm ' +
+	      'package (https://www.npmjs.com/package/glob-all), and are relative to ' +
+	      'the input directory.\n' +
+	      'Example: --include="**/myFolder/**,**/*.js"'
+} );
 parser.addArgument( '--exclude', {
 	help: 'Glob patterns to exclude from being converted. Separate multiple patterns ' +
 	      'with a comma. The patterns must be valid for the "glob-all" npm ' +
-	      'package (https://www.npmjs.com/package/glob-all).\n' +
+	      'package (https://www.npmjs.com/package/glob-all), and are relative to ' +
+	      'the input directory.\n' +
 	      'Example: --exclude="**/myFolder/**,**/*.jsx"'
 } );
 parser.addArgument( '--log-level', {
@@ -55,6 +63,7 @@ if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 convertJsToTsSync( absolutePath, {
 	indentationText: resolveIndentationText( args.indentation_text ),
 	logLevel: resolveLogLevel( args.log_level ),
+	includePatterns: parseIncludePatterns( args.include ),
 	excludePatterns: parseExcludePatterns( args.exclude )
 } );
 
@@ -86,6 +95,12 @@ function resolveLogLevel( logLevelStr: string ): LogLevel {
 	return logLevelStr as LogLevel;
 }
 
+
+function parseIncludePatterns( includePatterns: string | undefined ): string[] | undefined {
+	if( !includePatterns ) { return undefined; }  // return undefined to use the default
+
+	return includePatterns.split( ',' );
+}
 
 function parseExcludePatterns( excludePatterns: string | undefined ): string[] {
 	if( !excludePatterns ) { return []; }
