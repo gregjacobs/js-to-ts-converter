@@ -30,10 +30,17 @@ export function convert( tsAstProject: Project ): Project {
 	// Rename .js files to .ts files
 	logger.info( 'Renaming .js files to .ts' );
 	tsAstProject.getSourceFiles().forEach( sourceFile => {
-		const dir = sourceFile.getDirectoryPath();
-		const basename = sourceFile.getBaseNameWithoutExtension();
+		const ext = sourceFile.getExtension();
 
-		sourceFile.move( `${dir}/${basename}.ts` );
+		if( ext === '.js' ) {
+			const dir = sourceFile.getDirectoryPath();
+			const basename = sourceFile.getBaseNameWithoutExtension();
+			const outputFilePath = `${dir}/${basename}.ts`;
+
+			logger.debug( `  Renaming ${sourceFile.getFilePath()} to ${outputFilePath}` );
+
+			sourceFile.move( outputFilePath );
+		}
 	} );
 
 	// Filter out any node_modules files that accidentally got included by an import.
