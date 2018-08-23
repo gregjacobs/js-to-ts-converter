@@ -1,4 +1,5 @@
 import Project, { IndentationText } from "ts-simple-ast";
+import * as fs from "fs";
 const glob = require( 'glob-all' );
 
 /**
@@ -46,9 +47,11 @@ export function createTsAstProject( directory: string, options: {
 
 	// Finally, get the files and add to the TsAstProject
 	const files = glob.sync( filePatterns );
-	files.forEach( ( filePath: string ) => {
-		tsAstProject.addExistingSourceFile( filePath )
-	} );
+	files
+		.filter( ( filePath: string ) => fs.statSync( filePath ).isFile() )  // don't take directories
+		.forEach( ( filePath: string ) => {
+			tsAstProject.addExistingSourceFile( filePath )
+		} );
 
 	return tsAstProject;
 }
