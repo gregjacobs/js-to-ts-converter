@@ -1,6 +1,6 @@
-import { isValidIdentifier } from "./is-valid-identifier";
+import { isValidIdentifier } from "../../util/is-valid-identifier";
 import { ClassDeclaration, SourceFile } from "ts-simple-ast";
-import { findImportForIdentifier } from "./find-import-for-identifier";
+import { findImportForIdentifier } from "../../util/find-import-for-identifier";
 const resolve = require( 'resolve' );
 const TraceError = require( 'trace-error' );
 

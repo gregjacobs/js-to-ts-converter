@@ -1,8 +1,8 @@
 import Project, { ts, ClassDeclaration, ClassInstancePropertyTypes, MethodDeclaration, PropertyAccessExpression, SourceFile, SyntaxKind, VariableDeclaration } from "ts-simple-ast";
-import { JsClass } from "../../model/js-class";
+import { JsClass } from "./js-class";
 import { difference, union } from "../../util/set-utils";
 import { parseDestructuredProps } from "../../util/parse-destructured-props";
-import { parseSuperclassNameAndPath } from "../../util/parse-superclass-name-and-path";
+import { parseSuperclassNameAndPath } from "./parse-superclass-name-and-path";
 import { isThisReferencingVar } from "../../util/is-this-referencing-var";
 import { propertyAccessWithObjFilter } from "../../util/is-property-access-with-obj";
 import logger from "../../logger/logger";
