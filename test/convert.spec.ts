@@ -4,6 +4,7 @@ import { convert } from "../src/converter/convert";
 import { SourceFile } from "ts-simple-ast";
 import * as fs from "fs";
 import logger from "../src/logger/logger";
+import { JsToTsConverterOptions } from "../src";
 
 // Minimal logging for tests
 logger.setLogLevel( 'error' );
@@ -47,6 +48,14 @@ describe( 'convert()', () => {
 		runTest( `${__dirname}/fixture/function-calls-with-fewer-args-than-params` );
 	} );
 
+
+	it( `should properly handle includePatterns and excludePatterns options`, () => {
+		runTest( `${__dirname}/fixture/include-exclude-patterns`, {
+			includePatterns: [ '**/included/**' ],
+			excludePatterns: [ '**/included/excluded/**' ]
+		} );
+	} );
+
 } );
 
 
@@ -60,10 +69,14 @@ describe( 'convert()', () => {
  * The `input` directory will be converted, and then compared to the
  * `expected` directory.
  *
- * @param {string} absolutePath Absolute path to the directory which has
+ * @param absolutePath Absolute path to the directory which has
  *   `input` and `expected` subdirectories.
+ * @param [inputFilesOptions] The options to configure the converter.
  */
-function runTest( absolutePath: string ) {
+function runTest(
+	absolutePath: string,
+	inputFilesOptions?: JsToTsConverterOptions
+) {
 	if( !fs.lstatSync( absolutePath ).isDirectory() ) {
 		throw new Error( 'The absolute path: ' + absolutePath + ' is not a directory' );
 	}
@@ -74,7 +87,7 @@ function runTest( absolutePath: string ) {
 		throw new Error( 'The absolute path: ' + absolutePath + '/expected is not a directory' );
 	}
 
-	const inputFilesProject = createTsAstProject( absolutePath + '/input' );
+	const inputFilesProject = createTsAstProject( absolutePath + '/input', inputFilesOptions );
 	const expectedFilesProject = createTsAstProject( absolutePath + '/expected' );
 
 	const convertedInputProject = convert( inputFilesProject );

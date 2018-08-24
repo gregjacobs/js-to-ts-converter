@@ -1,5 +1,6 @@
 import Project, { IndentationText } from "ts-simple-ast";
 import * as fs from "fs";
+const Minimatch = require( 'minimatch' ).Minimatch;
 const glob = require( 'glob-all' );
 
 /**
@@ -24,36 +25,55 @@ export function createTsAstProject( directory: string, options: {
 		}
 	} );
 
-
-	let filePatterns: string[] = [];
-
-	// Default to including all .js and .ts files if no 'includePatterns' was
-	// provided
-	( options.includePatterns || [ '**/*.+(js|ts)' ] ).forEach( pattern => {
-		filePatterns.push( `${directory}/${pattern}` );
-	} );
-
-	// Do not include node_modules. We don't want to attempt to parse those as
-	// they may be ES5, and we also don't accidentally want to write out into
-	// the node_modules folder
-	filePatterns.push(
-		`!${directory}/**/node_modules/**/*.+(js|ts)`
-	);
-
-	// Add any patterns to exclude
-	( options.excludePatterns || [] ).forEach( pattern => {
-		filePatterns.push( `!${directory}/${pattern}` );
-	} );
-
-	// Finally, get the files and add to the TsAstProject
-	const files = glob.sync( filePatterns, {
+	// Get all files, and then filter. Was using glob-all and passing all of the
+	// globs to the utility, but it takes way too long on large projects because
+	// it seems to read the file system multiple times - once for each pattern.
+	let files = glob.sync( `${directory}/**/*.+(js|ts)`, {
 		follow: true   // follow symlinks
 	} );
-	files
-		.filter( ( filePath: string ) => fs.statSync( filePath ).isFile() )  // don't take directories
-		.forEach( ( filePath: string ) => {
-			tsAstProject.addExistingSourceFile( filePath )
-		} );
+
+	// First, filter out any path which includes node_modules. We don't want to
+	// attempt to parse those as they may be ES5, and we also don't accidentally
+	// want to write out into the node_modules folder
+	const nodeModulesRegex = /[\\\/]node_modules[\\\/]/;
+	files = files.filter( ( file: string ) => !nodeModulesRegex.test( file ) );
+
+	let includeMinimatches = createIncludeMinimatches( directory, options.includePatterns );
+	let excludeMinimatches = createExcludeMinimatches( directory, options.excludePatterns );
+
+	let includedFiles = files
+		.filter( ( filePath: string ) => {
+			return includeMinimatches.some( minimatch => minimatch.match( filePath ) );
+		} )
+		.filter( ( filePath: string ) => {
+			return !excludeMinimatches.some( minimatch => minimatch.match( filePath ) );
+		} )
+		.filter( ( filePath: string ) => fs.statSync( filePath ).isFile() );  // don't take directories
+
+	includedFiles.forEach( ( filePath: string ) => {
+		tsAstProject.addExistingSourceFile( filePath )
+	} );
 
 	return tsAstProject;
 }
+
+
+function createIncludeMinimatches(
+	directory: string,
+	includePatterns: string[] | undefined
+) {
+	return ( includePatterns || [ '**/*.+(js|ts)' ] )
+		.map( pattern => `${directory}/${pattern}` )
+		.map( pattern => new Minimatch( pattern ) );
+}
+
+
+function createExcludeMinimatches(
+	directory: string,
+	excludePatterns: string[] | undefined
+) {
+	return ( excludePatterns || [] )
+		.map( pattern => `${directory}/${pattern}` )
+		.map( pattern => new Minimatch( pattern ) );
+}
+
