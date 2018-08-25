@@ -1127,9 +1127,9 @@ ts-node@^7.0.0:
     source-map-support "^0.5.6"
     yn "^2.0.0"
 
-ts-simple-ast@^14.2.0:
-  version "14.2.0"
-  resolved "https://registry.yarnpkg.com/ts-simple-ast/-/ts-simple-ast-14.2.0.tgz#b04380cf541cf898b80b91bf61dc7566fe005add"
+ts-simple-ast@^14.2.1:
+  version "14.2.1"
+  resolved "https://registry.yarnpkg.com/ts-simple-ast/-/ts-simple-ast-14.2.1.tgz#f50617e1920b32d01a8d6073b1f36c61e17e9b5b"
   dependencies:
     "@dsherret/to-absolute-glob" "^2.0.2"
     code-block-writer "^7.2.1"

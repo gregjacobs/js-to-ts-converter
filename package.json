@@ -36,7 +36,7 @@
 		"minimatch": "^3.0.4",
 		"resolve": "^1.8.1",
 		"trace-error": "^0.0.7",
-		"ts-simple-ast": "^14.2.0",
+		"ts-simple-ast": "^14.2.1",
 		"typescript": "^2.9.2",
 		"winston": "^3.0.0"
 	},
