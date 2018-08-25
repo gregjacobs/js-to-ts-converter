@@ -13,15 +13,8 @@ export class JsClass {
 
 	/**
 	 * The absolute path of the file that the class was found in.
-	 *
-	 * Will be `undefined` if the class was found in the node_modules folder. We
-	 * don't try to resolve the path of a module that exists in the node_modules
-	 * folder as they're not relevant to this conversion utility, and we want to
-	 * allow conversions of codebases that don't have node_modules installed
-	 * (which can really improve performance as ts-simple-ast doesn't try to
-	 * resolve them when it finds imports in .ts files)
 	 */
-	public readonly path: string | undefined;
+	public readonly path: string;
 
 	/**
 	 * The name of this class's superclass. Will be `undefined` if the class
@@ -35,7 +28,12 @@ export class JsClass {
 	 * same value as the {@link #path}.
 	 *
 	 * Will be `undefined` if the superclass was found in the node_modules
-	 * folder. See node in {@link #path} about this.
+	 * folder. We don't try to resolve the path of a module that exists in the
+	 * node_modules folder as they're not relevant to this conversion utility,
+	 * and we want to allow conversions of codebases that don't have
+	 * node_modules installed (which can really improve performance as
+	 * ts-simple-ast doesn't try to resolve them when it finds imports in .ts
+	 * files)
 	 */
 	public readonly superclassPath: string | undefined;
 
@@ -58,7 +56,7 @@ export class JsClass {
 
 	constructor( cfg: {
 		name: string | undefined;
-		path: string | undefined;
+		path: string;
 		superclassName: string | undefined,
 		superclassPath: string | undefined,
 		methods?: Set<string>;
