@@ -49,6 +49,13 @@ describe( 'convert()', () => {
 	} );
 
 
+	it( `should not require node_modules to be installed in order to convert a
+	     codebase`,
+	() => {
+		runTest( `${__dirname}/fixture/superclass-subclass-node-modules-not-installed` );
+	} );
+
+
 	it( `should properly handle includePatterns and excludePatterns options`, () => {
 		runTest( `${__dirname}/fixture/include-exclude-patterns`, {
 			includePatterns: [ '**/included/**' ],

@@ -4,28 +4,72 @@ import { union } from "../../util/set-utils";
  * Represents a JavaScript class found in a source file.
  */
 export class JsClass {
-	public readonly path: string;
-	public readonly name: string | undefined;             // will be undefined for a default export class
-	public readonly superclassName: string | undefined;       // undefined if there is no superclass
-	public readonly superclassPath: string | undefined;   // undefined if there is no superclass
+	/**
+	 * The name of the class.
+	 *
+	 * Will be undefined for a default export class.
+	 */
+	public readonly name: string | undefined;
+
+	/**
+	 * The absolute path of the file that the class was found in.
+	 *
+	 * Will be `undefined` if the class was found in the node_modules folder. We
+	 * don't try to resolve the path of a module that exists in the node_modules
+	 * folder as they're not relevant to this conversion utility, and we want to
+	 * allow conversions of codebases that don't have node_modules installed
+	 * (which can really improve performance as ts-simple-ast doesn't try to
+	 * resolve them when it finds imports in .ts files)
+	 */
+	public readonly path: string | undefined;
+
+	/**
+	 * The name of this class's superclass. Will be `undefined` if the class
+	 * does not have a superclass.
+	 */
+	public readonly superclassName: string | undefined;
+
+	/**
+	 * The path to the file which holds this class's superclass. If the same
+	 * file that holds this class also holds its superclass, this will be the
+	 * same value as the {@link #path}.
+	 *
+	 * Will be `undefined` if the superclass was found in the node_modules
+	 * folder. See node in {@link #path} about this.
+	 */
+	public readonly superclassPath: string | undefined;
+
+	/**
+	 * The set of methods found in the class.
+	 */
 	public readonly methods: Set<string>;
+
+	/**
+	 * The set of properties found to be used in the class. These are inferred
+	 * from usages. For example: console.log(this.something) would tell us that
+	 * the class has a property `something`
+	 */
 	public readonly properties: Set<string>;
-	public readonly members: Set<string>;  // a union of the methods and properties Sets
+
+	/**
+	 * A union of the {@link #methods} and {@link #properties} sets
+	 */
+	public readonly members: Set<string>;
 
 	constructor( cfg: {
-		path: string;
 		name: string | undefined;
-		superclassName: string | undefined;
-		superclassPath: string | undefined;
-		methods: Set<string>;
-		properties: Set<string>;
+		path: string | undefined;
+		superclassName: string | undefined,
+		superclassPath: string | undefined,
+		methods?: Set<string>;
+		properties?: Set<string>;
 	} ) {
-		this.path = cfg.path;
 		this.name = cfg.name;
+		this.path = cfg.path;
 		this.superclassName = cfg.superclassName;
 		this.superclassPath = cfg.superclassPath;
-		this.methods = cfg.methods;
-		this.properties = cfg.properties;
+		this.methods = cfg.methods || new Set<string>();
+		this.properties = cfg.properties || new Set<string>();
 
 		this.members = union( this.methods, this.properties );
 	}
@@ -41,6 +85,9 @@ export class JsClass {
 	/**
 	 * Retrieves the ID of the superclass JsClass instance, if the JsClass has
 	 * one. If not, returns undefined.
+	 *
+	 * Also returns `undefined` if the class is found to be in the node_modules
+	 * folder, as we don't want to attempt to parse ES5 modules.
 	 */
 	public get superclassId(): string | undefined {
 		if( this.isSuperclassInNodeModules() ) {
@@ -63,7 +110,7 @@ export class JsClass {
 	 * its properties, so we'll just stop processing at that point.
 	 */
 	public isSuperclassInNodeModules(): boolean {
-		return !!this.superclassPath && /[\\\/]node_modules[\\\/]/.test( this.superclassPath );
+		return this.superclassPath === undefined;
 	}
 
 }
