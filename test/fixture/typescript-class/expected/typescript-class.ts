@@ -1,4 +1,4 @@
-class TypescriptClass {
+export class TypescriptClass {
 	public prop: any;  // shouldn't be duplicated
 
 	constructor() {

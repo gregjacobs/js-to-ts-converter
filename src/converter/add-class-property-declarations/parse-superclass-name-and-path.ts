@@ -51,7 +51,7 @@ export function parseSuperclassNameAndPath(
 
 
 /**
- * Finds the import path for the given `identifier`.
+ * Finds the absolute path for the import with the given `identifier`.
  *
  * For example, if we were looking for the identifier 'MyClass' in the following
  * list of imports:
@@ -59,9 +59,9 @@ export function parseSuperclassNameAndPath(
  *     import { Something } from './somewhere';
  *     import { MyClass } from './my-class';
  *
- * Then the method would return 'absolute/path/to/my-class.js';
+ * Then the method would return '/absolute/path/to/my-class.js';
  *
- * If there is no import for `identifier`, the method returns `null`.
+ * If there is no import for `identifier`, the method returns `undefined`.
  */
 function findImportPathForIdentifier(
 	sourceFile: SourceFile,
@@ -85,7 +85,10 @@ function findImportPathForIdentifier(
 		// based on the source file that the import was found
 		const basedir = sourceFile.getDirectoryPath();
 		try {
-			return resolve.sync( moduleSpecifier, { basedir } );
+			return resolve.sync( moduleSpecifier, {
+				basedir,
+				extensions: [ '.ts', '.js' ]
+			} );
 
 		} catch( error ) {
 			throw new TraceError( `
@@ -102,5 +105,3 @@ function findImportPathForIdentifier(
 	// Nothing found, return undefined
 	return undefined;
 }
-
-
