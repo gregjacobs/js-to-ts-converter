@@ -48,7 +48,7 @@ export function isPropertyOrElemementAccessWithObj(
  *     const obj2PropOrElemAccesses = propOrElementAccesses
  *         .filter( propertyOrElementAccessWithObjFilter( 'obj2' ) );
  */
-export function propertyOrElementAccessWithObjFilter( objIdentifier: string ) {
+export function propertyOrElementAccessWithObjFilter( objIdentifier: string ): ( node: Node ) => node is PropertyAccessExpression | ElementAccessExpression {
 	return ( node: Node ): node is PropertyAccessExpression | ElementAccessExpression => {
 		return isPropertyOrElemementAccessWithObj( node, objIdentifier );
 	};
