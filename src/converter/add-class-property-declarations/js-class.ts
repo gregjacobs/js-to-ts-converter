@@ -32,7 +32,7 @@ export class JsClass {
 	 * node_modules folder as they're not relevant to this conversion utility,
 	 * and we want to allow conversions of codebases that don't have
 	 * node_modules installed (which can really improve performance as
-	 * ts-simple-ast doesn't try to resolve them when it finds imports in .ts
+	 * ts-morph doesn't try to resolve them when it finds imports in .ts
 	 * files)
 	 */
 	public readonly superclassPath: string | undefined;

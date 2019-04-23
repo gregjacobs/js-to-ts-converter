@@ -1,4 +1,4 @@
-import { Identifier, Node, PropertyAccessExpression, TypeGuards } from "ts-simple-ast";
+import { Identifier, Node, PropertyAccessExpression, TypeGuards } from "ts-morph";
 
 /**
  * Determines if the given `node` is a PropertyAccessExpression or

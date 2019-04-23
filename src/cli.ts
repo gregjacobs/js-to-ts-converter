@@ -3,7 +3,7 @@
 import * as path from "path";
 import * as fs from 'fs';
 
-import { IndentationText } from "ts-simple-ast";
+import { IndentationText } from "ts-morph";
 import logger, { LogLevel, logLevels } from './logger';
 import { convertJsToTsSync } from "./js-to-ts-converter";
 

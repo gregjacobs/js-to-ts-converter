@@ -103,6 +103,13 @@ TypeScript compiler, so simply adding the property declarations typed as `any`
 was the quickest option there. The utility may look at property initializers in 
 the future to determine a better type.
 
+If you have other types of compiler errors that you think might be able to be 
+transformed by this utility, please feel free to raise an issue (or pull
+request!)
+
+Hopefully you only need to use this utility once, but if it saved you time, 
+please star it so that I know it helped you out :)
+
 
 ## Fair Warning
 
@@ -118,8 +125,6 @@ npm install --global js-to-ts-converter
 
 js-to-ts-converter path/to/js/files
 ```
-
-
 
 
 ## Running the Utility from Node

@@ -1,4 +1,4 @@
-import { ElementAccessExpression, Identifier, Node, TypeGuards } from "ts-simple-ast";
+import { ElementAccessExpression, Identifier, Node, TypeGuards } from "ts-morph";
 
 /**
  * Determines if the given `node` is a ElementAccessExpression whose object is

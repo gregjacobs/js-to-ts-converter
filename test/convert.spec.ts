@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { createTsAstProject } from "../src/create-ts-ast-project";
 import { convert } from "../src/converter/convert";
-import { SourceFile } from "ts-simple-ast";
+import { SourceFile } from "ts-morph";
 import * as fs from "fs";
 import logger from "../src/logger/logger";
 import { JsToTsConverterOptions } from "../src";
@@ -63,6 +63,17 @@ describe( 'convert()', () => {
 		} );
 	} );
 
+
+	it( `should properly convert a React .jsx file to .tsx`, () => {
+		runTest( `${__dirname}/fixture/react-class-jsx` );
+	} );
+
+	it( `should properly convert a React .js file which has JSX within it
+		 to .tsx`, 
+	() => {
+		runTest( `${__dirname}/fixture/react-class-js` );
+	} );
+
 } );
 
 
@@ -96,6 +107,10 @@ function runTest(
 
 	const inputFilesProject = createTsAstProject( absolutePath + '/input', inputFilesOptions );
 	const expectedFilesProject = createTsAstProject( absolutePath + '/expected' );
+
+	if( inputFilesProject.getSourceFiles().length === 0 ) {
+		throw new Error( `No source files were found in the input directory: ${absolutePath}/input` );
+	}
 
 	const convertedInputProject = convert( inputFilesProject );
 
@@ -137,6 +152,5 @@ function runTest(
 		expect( convertedSourceFile.getFullText() )
 			.to.equal( expectedSourceFile!.getFullText() );
 	} );
-
 
 }

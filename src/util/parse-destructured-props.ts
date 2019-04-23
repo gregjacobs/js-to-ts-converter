@@ -1,4 +1,4 @@
-import { ts, SyntaxKind } from "ts-simple-ast";
+import { ts, SyntaxKind } from "ts-morph";
 
 /**
  * Given a ts.ObjectBindingPattern node, returns an array of the names that

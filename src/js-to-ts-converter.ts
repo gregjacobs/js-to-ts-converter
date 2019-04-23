@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { createTsAstProject } from "./create-ts-ast-project";
 import { convert } from "./converter/convert";
-import Project, { IndentationText } from "ts-simple-ast";
+import { Project, IndentationText } from "ts-morph";
 import { LogLevel } from "./logger";
 import logger from "./logger/logger";
 
@@ -61,7 +61,7 @@ export function convertJsToTsSync(
 
 /**
  * Performs the actual conversion given a `sourceFilesPath`, and returning a
- * `ts-simple-ast` Project with the converted source files.
+ * `ts-morph` Project with the converted source files.
  *
  * @param sourceFilesPath The path to the source files to convert
  * @param [options]

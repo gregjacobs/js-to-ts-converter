@@ -1,4 +1,4 @@
-import Project from "ts-simple-ast";
+import { Project, SyntaxKind } from "ts-morph";
 import { addClassPropertyDeclarations } from "./add-class-property-declarations/add-class-property-declarations";
 import { addOptionalsToFunctionParams } from "./add-optionals-to-function-params";
 import { filterOutNodeModules } from "./filter-out-node-modules";
@@ -32,13 +32,14 @@ export function convert( tsAstProject: Project ): Project {
 	tsAstProject.getSourceFiles().forEach( sourceFile => {
 		const ext = sourceFile.getExtension();
 
-		if( ext === '.js' ) {
+		if( ext === '.js' || ext === '.jsx' ) {
 			const dir = sourceFile.getDirectoryPath();
 			const basename = sourceFile.getBaseNameWithoutExtension();
-			const outputFilePath = `${dir}/${basename}.ts`;
+			const fileHasJsx = sourceFile.getFirstDescendantByKind( SyntaxKind.JsxElement );  // in case there's a '.js' file which has JSX in it
+			const extension = ( fileHasJsx || ext === '.jsx' ) ? 'tsx' : 'ts';
+			const outputFilePath = `${dir}/${basename}.${extension}`;
 
 			logger.debug( `  Renaming ${sourceFile.getFilePath()} to ${outputFilePath}` );
-
 			sourceFile.move( outputFilePath );
 		}
 	} );

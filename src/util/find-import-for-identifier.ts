@@ -1,4 +1,4 @@
-import { ImportDeclaration, ImportSpecifier, SourceFile } from "ts-simple-ast";
+import { ImportDeclaration, ImportSpecifier, SourceFile } from "ts-morph";
 
 /**
  * Finds an ImportDeclaration for a given identifier (name).

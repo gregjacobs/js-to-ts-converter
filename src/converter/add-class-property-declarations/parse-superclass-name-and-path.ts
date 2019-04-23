@@ -1,5 +1,5 @@
 import { isValidIdentifier } from "../../util/is-valid-identifier";
-import { ClassDeclaration, SourceFile } from "ts-simple-ast";
+import { ClassDeclaration, SourceFile } from "ts-morph";
 import { findImportForIdentifier } from "../../util/find-import-for-identifier";
 const resolve = require( 'resolve' );
 const TraceError = require( 'trace-error' );
@@ -45,7 +45,7 @@ export function parseSuperclassNameAndPath(
 
 	return {
 		superclassName,
-		superclassPath: superclassPath && superclassPath.replace( /\\/g, '/' )  // normalize backslashes on Windows to forward slashes so we can compare directories with the paths that ts-simple-ast produces
+		superclassPath: superclassPath && superclassPath.replace( /\\/g, '/' )  // normalize backslashes on Windows to forward slashes so we can compare directories with the paths that ts-morph produces
 	};
 }
 

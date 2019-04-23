@@ -1,4 +1,4 @@
-import { Node, SyntaxKind, TypeGuards, VariableDeclaration } from "ts-simple-ast";
+import { Node, SyntaxKind, TypeGuards, VariableDeclaration } from "ts-morph";
 
 /**
  * Determines if the given AST Node is a VariableDeclaration of the form:

@@ -25,7 +25,7 @@
 	"scripts": {
 		"build": "tsc",
 		"cli": "npm run build && node dist/cli.js",
-		"test": "mocha --require ts-node/register --timeout 30000 --watch-extensions ts \"**/*.spec.ts\"",
+		"test": "mocha --require ts-node/register --timeout 60000 --watch-extensions ts \"**/*.spec.ts\"",
 		"prepublishOnly": "npm test && npm run build"
 	},
 	"dependencies": {
@@ -36,7 +36,7 @@
 		"minimatch": "^3.0.4",
 		"resolve": "^1.8.1",
 		"trace-error": "^0.0.7",
-		"ts-simple-ast": "^14.2.1",
+		"ts-morph": "^2.0.1",
 		"typescript": "^2.9.2",
 		"winston": "^3.0.0"
 	},

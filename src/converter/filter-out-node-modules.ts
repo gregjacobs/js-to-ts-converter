@@ -1,4 +1,4 @@
-import Project from "ts-simple-ast";
+import { Project } from "ts-morph";
 
 /**
  * Given a Project, removes all files that are under the node_modules folder.

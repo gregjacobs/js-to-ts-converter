@@ -1,4 +1,4 @@
-import Project, { CallExpression, ClassDeclaration, ConstructorDeclaration, FunctionDeclaration, MethodDeclaration, NewExpression, Node, SourceFile, SyntaxKind } from "ts-simple-ast";
+import { Project, CallExpression, ClassDeclaration, ConstructorDeclaration, FunctionDeclaration, MethodDeclaration, NewExpression, Node, SourceFile, SyntaxKind } from "ts-morph";
 import logger from "../logger/logger";
 
 type NameableFunction = FunctionDeclaration | MethodDeclaration;

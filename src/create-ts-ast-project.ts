@@ -1,10 +1,10 @@
-import Project, { IndentationText } from "ts-simple-ast";
+import { Project, IndentationText } from "ts-morph";
 import * as fs from "fs";
 const Minimatch = require( 'minimatch' ).Minimatch;
 const glob = require( 'glob-all' );
 
 /**
- * Creates a ts-simple-ast Project by including the source files under the given
+ * Creates a ts-morph Project by including the source files under the given
  * `directory`.
  *
  * @param directory The absolute path to the directory of .js files to
@@ -28,7 +28,7 @@ export function createTsAstProject( directory: string, options: {
 	// Get all files, and then filter. Was using glob-all and passing all of the
 	// globs to the utility, but it takes way too long on large projects because
 	// it seems to read the file system multiple times - once for each pattern.
-	let files = glob.sync( `${directory}/**/*.+(js|ts)`, {
+	let files = glob.sync( `${directory}/**/*.+(js|ts|jsx|tsx)`, {
 		follow: true   // follow symlinks
 	} );
 
@@ -62,7 +62,7 @@ function createIncludeMinimatches(
 	directory: string,
 	includePatterns: string[] | undefined
 ) {
-	return ( includePatterns || [ '**/*.+(js|ts)' ] )
+	return ( includePatterns || [ '**/*.+(js|ts|jsx|tsx)' ] )
 		.map( pattern => `${directory}/${pattern}` )
 		.map( pattern => new Minimatch( pattern ) );
 }

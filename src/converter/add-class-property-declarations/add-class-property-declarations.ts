@@ -1,4 +1,4 @@
-import Project, { ClassInstancePropertyTypes, PropertyDeclarationStructure, Scope } from "ts-simple-ast";
+import { Project, ClassInstancePropertyTypes, PropertyDeclarationStructure, Scope } from "ts-morph";
 import { parseJsClasses } from "./parse-js-classes";
 import { correctJsProperties } from "./correct-js-properties";
 import logger from "../../logger/logger";

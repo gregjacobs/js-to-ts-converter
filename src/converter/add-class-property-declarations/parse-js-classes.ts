@@ -1,4 +1,4 @@
-import Project, { ts, ClassDeclaration, ClassInstancePropertyTypes, MethodDeclaration, PropertyAccessExpression, SourceFile, SyntaxKind, VariableDeclaration } from "ts-simple-ast";
+import { Project, ts, ClassDeclaration, ClassInstancePropertyTypes, MethodDeclaration, PropertyAccessExpression, SourceFile, SyntaxKind, VariableDeclaration } from "ts-morph";
 import { JsClass } from "./js-class";
 import { difference, union } from "../../util/set-utils";
 import { parseDestructuredProps } from "../../util/parse-destructured-props";
