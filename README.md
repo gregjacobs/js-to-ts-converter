@@ -121,9 +121,15 @@ to revert!
 ## Running the Utility from the CLI
 
 ```
+npx js-to-ts-converter ./path/to/js/files
+```
+
+If you would prefer to install the CLI globally, do this:
+
+```
 npm install --global js-to-ts-converter
 
-js-to-ts-converter path/to/js/files
+js-to-ts-converter ./path/to/js/files
 ```
 
 
