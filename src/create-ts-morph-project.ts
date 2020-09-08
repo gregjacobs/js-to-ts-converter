@@ -14,12 +14,12 @@ const glob = require( 'glob-all' );
  *   declarations.
  * @param options.excludePatterns Glob patterns to exclude files.
  */
-export function createTsAstProject( directory: string, options: {
+export function createTsMorphProject( directory: string, options: {
 	indentationText?: IndentationText,
 	includePatterns?: string[],
 	excludePatterns?: string[]
 } = {} ) {
-	const tsAstProject = new Project( {
+	const tsMorphProject = new Project( {
 		manipulationSettings: {
 			indentationText: options.indentationText || IndentationText.Tab
 		}
@@ -51,10 +51,10 @@ export function createTsAstProject( directory: string, options: {
 		.filter( ( filePath: string ) => fs.statSync( filePath ).isFile() );  // don't take directories
 
 	includedFiles.forEach( ( filePath: string ) => {
-		tsAstProject.addExistingSourceFile( filePath )
+		tsMorphProject.addSourceFileAtPath( filePath )
 	} );
 
-	return tsAstProject;
+	return tsMorphProject;
 }
 
 

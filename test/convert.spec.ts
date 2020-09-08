@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { createTsAstProject } from "../src/create-ts-ast-project";
+import { createTsMorphProject } from "../src/create-ts-morph-project";
 import { convert } from "../src/converter/convert";
 import { SourceFile } from "ts-morph";
 import * as fs from "fs";
@@ -105,8 +105,8 @@ function runTest(
 		throw new Error( 'The absolute path: ' + absolutePath + '/expected is not a directory' );
 	}
 
-	const inputFilesProject = createTsAstProject( absolutePath + '/input', inputFilesOptions );
-	const expectedFilesProject = createTsAstProject( absolutePath + '/expected' );
+	const inputFilesProject = createTsMorphProject( absolutePath + '/input', inputFilesOptions );
+	const expectedFilesProject = createTsMorphProject( absolutePath + '/expected' );
 
 	if( inputFilesProject.getSourceFiles().length === 0 ) {
 		throw new Error( `No source files were found in the input directory: ${absolutePath}/input` );

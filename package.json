@@ -1,7 +1,13 @@
 {
 	"name": "js-to-ts-converter",
-	"version": "0.16.3",
+	"version": "0.17.0",
 	"description": "Small utility to rename .js->.ts, and convert ES6 classes to TypeScript classes by filling in property declarations. See readme for more details.",
+	"scripts": {
+		"build": "tsc",
+		"cli": "npm run build && node dist/cli.js",
+		"test": "mocha --require ts-node/register --timeout 60000 --watch-extensions ts \"**/*.spec.ts\"",
+		"prepublishOnly": "npm test && npm run build"
+	},
 	"keywords": [
 		"typescript",
 		"conversion"
@@ -22,12 +28,6 @@
 	"files": [
 		"dist/"
 	],
-	"scripts": {
-		"build": "tsc",
-		"cli": "npm run build && node dist/cli.js",
-		"test": "mocha --require ts-node/register --timeout 60000 --watch-extensions ts \"**/*.spec.ts\"",
-		"prepublishOnly": "npm test && npm run build"
-	},
 	"dependencies": {
 		"argparse": "^1.0.10",
 		"glob-all": "^3.1.0",
@@ -36,8 +36,8 @@
 		"minimatch": "^3.0.4",
 		"resolve": "^1.8.1",
 		"trace-error": "^0.0.7",
-		"ts-morph": "^2.0.1",
-		"typescript": "^2.9.2",
+		"ts-morph": "^8.1.0",
+		"typescript": "^4.0.0",
 		"winston": "^3.0.0"
 	},
 	"devDependencies": {

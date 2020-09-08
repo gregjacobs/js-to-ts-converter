@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { createTsAstProject } from "./create-ts-ast-project";
+import { createTsMorphProject } from "./create-ts-morph-project";
 import { convert } from "./converter/convert";
 import { Project, IndentationText } from "ts-morph";
 import { LogLevel } from "./logger";
@@ -80,6 +80,6 @@ function doConvert(
 
 	const absolutePath = path.resolve( sourceFilesPath );
 
-	const tsAstProject = createTsAstProject( absolutePath, options );
+	const tsAstProject = createTsMorphProject( absolutePath, options );
 	return convert( tsAstProject );
 }
