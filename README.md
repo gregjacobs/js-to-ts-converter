@@ -137,7 +137,7 @@ js-to-ts-converter ./path/to/js/files
 
 TypeScript: 
 
-```
+```ts
 import { convertJsToTs, convertJsToTsSync } from 'js-to-ts-converter';
 
 
@@ -155,7 +155,7 @@ console.log( 'Done!' );
 
 JavaScript:
 
-```
+```js
 const { convertJsToTs, convertJsToTsSync } = require( 'js-to-ts-converter' );
 
 
