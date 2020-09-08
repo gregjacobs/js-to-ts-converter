@@ -53,8 +53,14 @@ export function addClassPropertyDeclarations( tsAstProject: Project ): Project {
 				return propName ? props.add( propName ) : props;
 			}, new Set<string>() );
 
-		const undeclaredProperties = [ ...jsClassProperties ]
+		let undeclaredProperties = [ ...jsClassProperties ]
 			.filter( ( propName: string ) => !currentPropertyDeclarations.has( propName ) );
+
+		// If the utility found a reference to this.constructor, we don't want to
+		// add a property called 'constructor'. Filter that out now.
+		// https://github.com/gregjacobs/js-to-ts-converter/issues/9
+		undeclaredProperties = undeclaredProperties
+			.filter( ( propName: string ) => propName !== 'constructor' );
 
 		// Add all currently-undeclared properties
 		const propertyDeclarations = undeclaredProperties.map( propertyName => {
@@ -66,7 +72,7 @@ export function addClassPropertyDeclarations( tsAstProject: Project ): Project {
 		} );
 
 		logger.verbose( `    Adding property declarations for properties: '${undeclaredProperties.join( "', '" )}'` );
-		classDeclaration.insertProperties( 0, propertyDeclarations )
+		classDeclaration.insertProperties( 0, propertyDeclarations );
 	} );
 
 	return tsAstProject;

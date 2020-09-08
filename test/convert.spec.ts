@@ -74,6 +74,11 @@ describe( 'convert()', () => {
 		runTest( `${__dirname}/fixture/react-class-js` );
 	} );
 
+	it.only( `should not do anything with a reference to this.constructor (https://github.com/gregjacobs/js-to-ts-converter/issues/9)`,
+	() => {
+		runTest( `${__dirname}/fixture/class-with-this-constructor-reference` );
+	} );
+
 } );
 
 
