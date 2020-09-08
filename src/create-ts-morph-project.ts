@@ -1,7 +1,5 @@
 import { Project, IndentationText } from "ts-morph";
-import * as fs from "fs";
-const Minimatch = require( 'minimatch' ).Minimatch;
-const glob = require( 'glob-all' );
+import fastGlob from 'fast-glob';
 
 /**
  * Creates a ts-morph Project by including the source files under the given
@@ -25,55 +23,24 @@ export function createTsMorphProject( directory: string, options: {
 		}
 	} );
 
-	// Get all files, and then filter. Was using glob-all and passing all of the
-	// globs to the utility, but it takes way too long on large projects because
-	// it seems to read the file system multiple times - once for each pattern.
-	let files = glob.sync( `${directory}/**/*.+(js|ts|jsx|tsx)`, {
-		follow: true   // follow symlinks
+	// Read files using fast-glob. fast-glob does a much better job over node-glob
+	// at ignoring directories like node_modules without reading all of the files 
+	// in them first
+	let files = fastGlob.sync( options.includePatterns || `**/*.+(js|ts|jsx|tsx)`, {
+		cwd: directory,
+		absolute: true,
+		followSymbolicLinks: true,
+
+		// filter out any path which includes node_modules. We don't want to
+		// attempt to parse those as they may be ES5, and we also don't accidentally
+		// want to write out into the node_modules folder
+		ignore: ['**/node_modules/**'].concat(options.excludePatterns || [])
 	} );
 
-	// First, filter out any path which includes node_modules. We don't want to
-	// attempt to parse those as they may be ES5, and we also don't accidentally
-	// want to write out into the node_modules folder
-	const nodeModulesRegex = /[\\\/]node_modules[\\\/]/;
-	files = files.filter( ( file: string ) => !nodeModulesRegex.test( file ) );
-
-	let includeMinimatches = createIncludeMinimatches( directory, options.includePatterns );
-	let excludeMinimatches = createExcludeMinimatches( directory, options.excludePatterns );
-
-	let includedFiles = files
-		.filter( ( filePath: string ) => {
-			return includeMinimatches.some( minimatch => minimatch.match( filePath ) );
-		} )
-		.filter( ( filePath: string ) => {
-			return !excludeMinimatches.some( minimatch => minimatch.match( filePath ) );
-		} )
-		.filter( ( filePath: string ) => fs.statSync( filePath ).isFile() );  // don't take directories
-
-	includedFiles.forEach( ( filePath: string ) => {
+	files.forEach( ( filePath: string ) => {
 		tsMorphProject.addSourceFileAtPath( filePath )
 	} );
 
 	return tsMorphProject;
-}
-
-
-function createIncludeMinimatches(
-	directory: string,
-	includePatterns: string[] | undefined
-) {
-	return ( includePatterns || [ '**/*.+(js|ts|jsx|tsx)' ] )
-		.map( pattern => `${directory}/${pattern}` )
-		.map( pattern => new Minimatch( pattern ) );
-}
-
-
-function createExcludeMinimatches(
-	directory: string,
-	excludePatterns: string[] | undefined
-) {
-	return ( excludePatterns || [] )
-		.map( pattern => `${directory}/${pattern}` )
-		.map( pattern => new Minimatch( pattern ) );
 }
 
