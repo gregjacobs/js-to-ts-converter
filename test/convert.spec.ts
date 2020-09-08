@@ -63,7 +63,6 @@ describe( 'convert()', () => {
 		} );
 	} );
 
-
 	it( `should properly convert a React .jsx file to .tsx`, () => {
 		runTest( `${__dirname}/fixture/react-class-jsx` );
 	} );
@@ -74,9 +73,14 @@ describe( 'convert()', () => {
 		runTest( `${__dirname}/fixture/react-class-js` );
 	} );
 
-	it.only( `should not do anything with a reference to this.constructor (https://github.com/gregjacobs/js-to-ts-converter/issues/9)`,
+	it( `should not do anything with a reference to this.constructor (https://github.com/gregjacobs/js-to-ts-converter/issues/9)`,
 	() => {
 		runTest( `${__dirname}/fixture/class-with-this-constructor-reference` );
+	} );
+
+	it( `should not error with a self-closing JSX element (https://github.com/gregjacobs/js-to-ts-converter/issues/4)`,
+	() => {
+		runTest( `${__dirname}/fixture/react-jsx-self-closing-element` );
 	} );
 
 } );
