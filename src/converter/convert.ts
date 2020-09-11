@@ -35,7 +35,10 @@ export function convert( tsAstProject: Project ): Project {
 		if( ext === '.js' || ext === '.jsx' ) {
 			const dir = sourceFile.getDirectoryPath();
 			const basename = sourceFile.getBaseNameWithoutExtension();
-			const fileHasJsx = sourceFile.getFirstDescendantByKind( SyntaxKind.JsxElement );  // in case there's a '.js' file which has JSX in it
+
+			// in case there's a '.js' file which has JSX in it
+			const fileHasJsx = sourceFile.getFirstDescendantByKind( SyntaxKind.JsxElement )
+				|| sourceFile.getFirstDescendantByKind( SyntaxKind.JsxSelfClosingElement );
 			const extension = ( fileHasJsx || ext === '.jsx' ) ? 'tsx' : 'ts';
 			const outputFilePath = `${dir}/${basename}.${extension}`;
 

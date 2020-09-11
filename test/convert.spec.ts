@@ -73,14 +73,16 @@ describe( 'convert()', () => {
 		runTest( `${__dirname}/fixture/react-class-js` );
 	} );
 
+	it( `should properly convert a React .js file which has only a self-closing JSX
+		 tag within it to .tsx (https://github.com/gregjacobs/js-to-ts-converter/issues/15),
+		 and also not error with a self-closing JSX element (https://github.com/gregjacobs/js-to-ts-converter/issues/4)`,
+	() => {
+		runTest( `${__dirname}/fixture/react-jsx-self-closing-element` );
+	} );
+
 	it( `should not do anything with a reference to this.constructor (https://github.com/gregjacobs/js-to-ts-converter/issues/9)`,
 	() => {
 		runTest( `${__dirname}/fixture/class-with-this-constructor-reference` );
-	} );
-
-	it( `should not error with a self-closing JSX element (https://github.com/gregjacobs/js-to-ts-converter/issues/4)`,
-	() => {
-		runTest( `${__dirname}/fixture/react-jsx-self-closing-element` );
 	} );
 
 } );
