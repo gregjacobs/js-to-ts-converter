@@ -16,76 +16,75 @@ describe( 'convert()', () => {
 	     classes`,
 	() => {
 		runTest( `${__dirname}/fixture/superclass-subclass` );
-	} );
-
+	});
 
 	it( `should ignore expressions (i.e. non-identifiers) in the 'extends' 
 	     clause of a class (at least for the moment, this would be too much
 	     to parse and figure out - may support in the future)`,
 	() => {
 		runTest( `${__dirname}/fixture/expression-extends` );
-	} );
-
+	});
 
 	it( `should not fill in property declarations for properties that are already
 	     declared (such as if the utility is run against a typescript codebase),
 	     but should fill in any missing properties that are not declared`,
 	() => {
 		runTest( `${__dirname}/fixture/typescript-class` );
-	} );
-
+	});
 
 	it( `should handle 'var this = that' by adding 'that.xyz' as a class
 	     property declaration`,
 	() => {
 		runTest( `${__dirname}/fixture/function-expressions-and-declarations` );
-	} );
-
+	});
 
 	it( `should make function parameters optional when call sites are found to
 	     supply fewer arguments than there are parameters`,
 	() => {
 		runTest( `${__dirname}/fixture/function-calls-with-fewer-args-than-params` );
-	} );
-
+	});
 
 	it( `should not require node_modules to be installed in order to convert a
 	     codebase`,
 	() => {
 		runTest( `${__dirname}/fixture/superclass-subclass-node-modules-not-installed` );
-	} );
-
+	});
 
 	it( `should properly handle includePatterns and excludePatterns options`, () => {
 		runTest( `${__dirname}/fixture/include-exclude-patterns`, {
 			includePatterns: [ '**/included/**' ],
 			excludePatterns: [ '**/included/excluded/**' ]
-		} );
-	} );
+		});
+	});
 
 	it( `should properly convert a React .jsx file to .tsx`, () => {
 		runTest( `${__dirname}/fixture/react-class-jsx` );
-	} );
+	});
 
 	it( `should properly convert a React .js file which has JSX within it
 		 to .tsx`, 
 	() => {
 		runTest( `${__dirname}/fixture/react-class-js` );
-	} );
+	});
 
 	it( `should properly convert a React .js file which has only a self-closing JSX
 		 tag within it to .tsx (https://github.com/gregjacobs/js-to-ts-converter/issues/15),
 		 and also not error with a self-closing JSX element (https://github.com/gregjacobs/js-to-ts-converter/issues/4)`,
 	() => {
 		runTest( `${__dirname}/fixture/react-jsx-self-closing-element` );
-	} );
+	});
 
 	it( `should not do anything with a reference to this.constructor (https://github.com/gregjacobs/js-to-ts-converter/issues/9)`,
 	() => {
 		runTest( `${__dirname}/fixture/class-with-this-constructor-reference` );
-	} );
+	});
 
-} );
+	it(`should convert JS classes with types in comment to TS-compilable classes`,
+	() => {
+		runTest(`${__dirname}/fixture/class-with-constructor-type-in-comment`);
+	});
+	
+});
 
 
 /**
@@ -162,6 +161,6 @@ function runTest(
 
 		expect( convertedSourceFile.getFullText() )
 			.to.equal( expectedSourceFile!.getFullText() );
-	} );
+	});
 
 }

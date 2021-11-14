@@ -5,7 +5,7 @@
 	"scripts": {
 		"build": "tsc",
 		"cli": "npm run build && node dist/cli.js",
-		"test": "mocha --require ts-node/register --timeout 60000 --watch-extensions ts \"**/*.spec.ts\"",
+		"test": "mocha --require ts-node/register --timeout 70000 --watch-extensions ts \"**/*.spec.ts\"",
 		"prepublishOnly": "npm test && npm run build"
 	},
 	"keywords": [
