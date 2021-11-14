@@ -85,6 +85,11 @@ describe( 'convert()', () => {
 		runTest( `${__dirname}/fixture/class-with-this-constructor-reference` );
 	} );
 
+	it(`should convert JS classes with types in comment to TS-compilable classes`,
+	() => {
+		runTest(`${__dirname}/fixture/class-with-constructor-type-in-comment`);
+	});
+	
 } );
 
 
