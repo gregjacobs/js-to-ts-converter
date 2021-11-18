@@ -81,7 +81,7 @@ describe( 'convert()', () => {
 
 	it(`should convert JS classes with types in comment to TS-compilable classes`,
 	() => {
-		runTest(`${__dirname}/fixture/class-with-constructor-type-in-comment`);
+		runTest(`${__dirname}/fixture/class-with-swagger-type-comments`);
 	});
 	
 });

@@ -64,14 +64,14 @@ export function addClassPropertyDeclarations(tsAstProject: Project): Project {
 
 		// Add all currently-undeclared properties
 		const propertyDeclarations = undeclaredProperties.map(propertyName => {
-			let [tsType, tsDefault, tsIsNullable, oaType, oaFormat, commentText] = getTypesFromComment(propertyName, classDeclaration);
+			const types = getTypesFromComment(propertyName, classDeclaration);
 
-			if (tsIsNullable === 'true') {
-				tsType = `${tsType} | null`;
+			if (types.tsIsNullable === 'true') {
+				types.tsType = `${types.tsType} | null`;
 			}
 			return {
 				name: propertyName,
-				type: tsType,
+				type: types.tsType,
 				scope: Scope.Public
 			} as PropertyDeclarationStructure;
 		});
@@ -81,19 +81,16 @@ export function addClassPropertyDeclarations(tsAstProject: Project): Project {
 
 		// logger.verbose(`    Setting property defaults for properties: '${undeclaredProperties.join("', '")}'`);
 		undeclaredProperties.map(propertyName => {
-			let [tsType, tsDefault, tsIsNullable, oaType, oaFormat, commentText] = getTypesFromComment(propertyName, classDeclaration);
+			const types = getTypesFromComment(propertyName, classDeclaration);
 
 			// Add default value to a property
 			const propDeclaration = classDeclaration.getPropertyOrThrow(propertyName)
 			if (propDeclaration !== null) {
-				if (tsDefault !== '') {
-					propDeclaration.setInitializer(tsDefault);
+				if (types.tsDefault !== '') {
+					propDeclaration.setInitializer(types.tsDefault);
 				}
-				if (commentText !== '') {
+				if (types.commentText !== '') {
 					const comments = propDeclaration.getLeadingCommentRanges();
-					const i = 0;
-					//const initializer = propDeclaration.getInitializerIfKindOrThrow(SyntaxKind.SingleLineCommentTrivia);
-					//initializer.insertProperty(1, commentText);
 				}
 			}
 		});
@@ -102,7 +99,14 @@ export function addClassPropertyDeclarations(tsAstProject: Project): Project {
 	return tsAstProject;
 }
 
-function getTypesFromComment(propertyName: string, classDeclaration: ClassDeclaration): [string, string, string, string, string, string] {
+function getTypesFromComment(propertyName: string, classDeclaration: ClassDeclaration): {
+	tsType: string;
+	tsDefault: string;
+	tsIsNullable: string;
+	oaType: string;
+	oaFormat: string;
+	commentText: string;
+} {
 	let tsType = 'any';
 	let tsDefault = '';
 	let tsIsNullable = '';
@@ -119,7 +123,6 @@ function getTypesFromComment(propertyName: string, classDeclaration: ClassDeclar
 					// Types: [`TS Type` #TS Default# ^OA Type^ ~OA Format~] - https://regex101.com
 
 					// TS Type pattern: (?<=`).*(?=`)
-					//const tsType = /(?<=`).*(?=`)/.exec(commentText)[0];
 					const tsTypeMatch = commentText.match(/(?<=`).*(?=`)/);
 					if (tsTypeMatch !== null) {
 						tsType = tsTypeMatch[0];
@@ -152,5 +155,5 @@ function getTypesFromComment(propertyName: string, classDeclaration: ClassDeclar
 			}
 		});
 	});
-	return [tsType, tsDefault, tsIsNullable, oaType, oaFormat, commentText];
+	return { tsType, tsDefault, tsIsNullable, oaType, oaFormat, commentText };
 }
