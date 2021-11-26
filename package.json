@@ -32,6 +32,8 @@
 		"argparse": "^2.0.1",
 		"fast-glob": "^3.2.7",
 		"graphlib": "^2.1.8",
+		"jsdoc-parse": "^6.0.1",
+		"jsdoc-to-markdown": "^7.1.0",
 		"lodash": "^4.17.21",
 		"resolve": "^1.20.0",
 		"trace-error": "^1.0.3",
@@ -42,6 +44,7 @@
 	"devDependencies": {
 		"@types/chai": "^4.2.22",
 		"@types/graphlib": "^2.1.8",
+		"@types/jsdoc-to-markdown": "^7.0.1",
 		"@types/lodash": "^4.14.177",
 		"@types/mocha": "^9.0.0",
 		"@types/node": "^16.11.9",
