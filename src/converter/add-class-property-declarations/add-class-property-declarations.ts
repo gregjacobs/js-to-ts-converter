@@ -199,36 +199,30 @@ function getJsDocElements(classDecl: ClassDeclaration | undefined): jsDocElement
 				tagElement.tagcomment = tag.getCommentText();
 				tagElement.tagText = tag.getText();
 
-				if (tagElement.tagName === "property") {
-					const i = 0;
-				}
-
 				if (tag instanceof JSDocUnknownTag && tagElement.tagName == "property") {
 					tagElement.isParam = true;
 					const propertyTag = tag as JSDocUnknownTag;
 
 					// TODO: get @property name, type comment the ts-morph way
-					let paramNameType = tagElement.tagcomment;
+					let paramNameAndType = tagElement.tagcomment;
 					const commentLen = tagElement.tagcomment?.length!;
 					let commentPos = tagElement.tagcomment?.indexOf(" - ")!;
 
 					if (commentPos > 0) {
-						paramNameType = paramNameType?.substring(0, commentPos);
-						commentPos += 3;
+						paramNameAndType = paramNameAndType?.substring(0, commentPos);
 						tagElement.tagcomment = tagElement.tagcomment?.substring(commentPos);
 					}
-					const matchesLastWord = paramNameType?.match(/\b(\w+)$/g);
-					if (matchesLastWord && matchesLastWord.length > 0) {
-						tagElement.paramName = matchesLastWord[0];
-					}
 
-					const matches = paramNameType?.match(/(?<=\{).+?(?=\})/g);
-					if (matches && matches.length > 0) {
-						tagElement.paramType = matches[0];
-					}
-				}
+					// Split paramNameAndType to Name, Type: {string} strProperty
+					const paramNameAndTypeArray = paramNameAndType?.split(" ")!;
 
-				if (tag instanceof JSDocParameterTag || tag instanceof JSDocPropertyTag) {
+					if (paramNameAndTypeArray?.length! > 0) {
+						tagElement.paramType = paramNameAndTypeArray[0];
+						tagElement.paramType = tagElement.paramType.replace("{", "").replace("}", "");
+						tagElement.paramName = paramNameAndTypeArray[1];
+					}
+					const i = 0;
+				} else if (tag instanceof JSDocParameterTag || tag instanceof JSDocPropertyTag) {
 					tagElement.isParam = true;
 					const paramTag = tag as JSDocParameterTag;
 					tagElement.paramName = paramTag.getName();
