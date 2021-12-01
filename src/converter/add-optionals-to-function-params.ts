@@ -311,10 +311,6 @@ function getJsDocs(fn: NameableFunction, jsdocs: JSDoc[] | undefined, jsDocEleme
 				tagElement.paramName = paramTag.getName();
 				tagElement.paramType = paramTag.getTypeExpression()?.getTypeNode()?.getText();
 
-				if (tagElement.paramName === "stringParam") {
-					const i = 0;
-				}
-
 				// TODO: find the right ts-morph way to get this
 				if (tagElement.paramType?.startsWith("?")) {
 					tagElement.isParamTypeOptional = true;

@@ -1,4 +1,4 @@
-import { Project, ClassInstancePropertyTypes, ClassDeclaration, PropertyDeclarationStructure, Scope, JSDocParameterTag, JSDoc, JSDocTag, ts } from "ts-morph";
+import { Project, ClassInstancePropertyTypes, ClassDeclaration, PropertyDeclarationStructure, Scope, JSDocParameterTag, JSDoc, JSDocTag, JSDocUnknownTag, JSDocPropertyTag } from "ts-morph";
 import { parseJsClasses } from "./parse-js-classes";
 import { correctJsProperties } from "./correct-js-properties";
 import logger from "../../logger/logger";
@@ -192,14 +192,43 @@ function getJsDocElements(classDecl: ClassDeclaration | undefined): jsDocElement
 				element.methodName = "constructor";
 			}
 
-			tags?.forEach((tag: JSDocTag<ts.JSDocTag>) => {
+			tags?.forEach((tag: JSDocTag) => {
 				const tagElement = new jsDocElement();
 				tagElement.isTag = true;
 				tagElement.tagName = tag.getTagName();
 				tagElement.tagcomment = tag.getCommentText();
 				tagElement.tagText = tag.getText();
 
-				if (tag instanceof JSDocParameterTag) {
+				if (tagElement.tagName === "property") {
+					const i = 0;
+				}
+
+				if (tag instanceof JSDocUnknownTag && tagElement.tagName == "property") {
+					tagElement.isParam = true;
+					const propertyTag = tag as JSDocUnknownTag;
+
+					// TODO: get @property name, type comment the ts-morph way
+					let paramNameType = tagElement.tagcomment;
+					const commentLen = tagElement.tagcomment?.length!;
+					let commentPos = tagElement.tagcomment?.indexOf(" - ")!;
+
+					if (commentPos > 0) {
+						paramNameType = paramNameType?.substring(0, commentPos);
+						commentPos += 3;
+						tagElement.tagcomment = tagElement.tagcomment?.substring(commentPos);
+					}
+					const matchesLastWord = paramNameType?.match(/\b(\w+)$/g);
+					if (matchesLastWord && matchesLastWord.length > 0) {
+						tagElement.paramName = matchesLastWord[0];
+					}
+
+					const matches = paramNameType?.match(/(?<=\{).+?(?=\})/g);
+					if (matches && matches.length > 0) {
+						tagElement.paramType = matches[0];
+					}
+				}
+
+				if (tag instanceof JSDocParameterTag || tag instanceof JSDocPropertyTag) {
 					tagElement.isParam = true;
 					const paramTag = tag as JSDocParameterTag;
 					tagElement.paramName = paramTag.getName();

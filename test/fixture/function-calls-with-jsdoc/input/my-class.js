@@ -4,8 +4,8 @@
  * @classdesc Test class description.
  * @public
  *
- * @param {number} _weight - The target weight value - from class
- * @param {boolean} _isBright - _isBright - from class
+ * @property {number} _weight - The target weight value - from class
+ * @property {boolean} _isBright - _isBright - from class
  */
 export class Test {
 	/**
