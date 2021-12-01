@@ -3,10 +3,10 @@ import {
 	CallExpression,
 	ClassDeclaration,
 	ConstructorDeclaration,
-	FunctionDeclaration,
-	MethodDeclaration,
 	SetAccessorDeclaration,
 	GetAccessorDeclaration,
+	MethodDeclaration,
+	FunctionDeclaration,
 	NewExpression,
 	Node,
 	SourceFile,
@@ -21,7 +21,7 @@ import {
 import logger from "../logger/logger";
 import { jsDocElement } from "./jsDocElement";
 
-type NameableFunction = FunctionDeclaration | MethodDeclaration | SetAccessorDeclaration | GetAccessorDeclaration;
+type NameableFunction = ConstructorDeclaration | SetAccessorDeclaration | GetAccessorDeclaration | MethodDeclaration | FunctionDeclaration;
 type FunctionTransformTarget = NameableFunction | ConstructorDeclaration;
 
 /**
@@ -133,9 +133,10 @@ function parseFunctionAndMethodCalls(sourceFiles: SourceFile[]): Map<NameableFun
 		const jsDocElements: jsDocElement[] | undefined = getJsDocElements(fns);
 
 		fns.forEach((fn: NameableFunction) => {
-			logger.verbose(`    Looking for calls to the function: '${fn.getName()}'`);
+			const fnName = fn instanceof ConstructorDeclaration ? "constructor" : fn.getName();
 
-			const fnName = fn.getName();
+			logger.verbose(`    Looking for calls to the function: '${fnName}'`);
+
 			const fnParams = fn.getParameters();
 			const numParams = fnParams.length;
 			const referencedNodes = fn.findReferencesAsNodes();
@@ -151,6 +152,11 @@ function parseFunctionAndMethodCalls(sourceFiles: SourceFile[]): Map<NameableFun
 				}
 
 				const jsDocElement = getMethodParameterType(fnName, paramName, jsDocElements);
+
+				if (jsDocElement?.isParamTypeOptional) {
+					param.setHasQuestionToken(true);
+				}
+
 				if (jsDocElement?.paramType) {
 					param.setType(jsDocElement?.paramType);
 				} else {
@@ -163,7 +169,7 @@ function parseFunctionAndMethodCalls(sourceFiles: SourceFile[]): Map<NameableFun
 				fn.setReturnType(returnTypeJsDocElement.returnType);
 			}
 
-			logger.debug(`    Found ${callsToFunction.length} call(s) to the function '${fn.getName()}'`);
+			logger.debug(`    Found ${callsToFunction.length} call(s) to the function '${fnName}'`);
 
 			const minNumberOfCallArgs = callsToFunction.reduce((minCallArgs: number, call: CallExpression) => {
 				return Math.min(minCallArgs, call.getArguments().length);
@@ -186,10 +192,11 @@ function parseFunctionAndMethodCalls(sourceFiles: SourceFile[]): Map<NameableFun
  */
 function getFunctionsAndMethods(sourceFile: SourceFile): NameableFunction[] {
 	return ([] as NameableFunction[]).concat(
-		sourceFile.getDescendantsOfKind(SyntaxKind.FunctionDeclaration),
-		sourceFile.getDescendantsOfKind(SyntaxKind.MethodDeclaration),
+		sourceFile.getDescendantsOfKind(SyntaxKind.Constructor),
 		sourceFile.getDescendantsOfKind(SyntaxKind.SetAccessor),
-		sourceFile.getDescendantsOfKind(SyntaxKind.GetAccessor)
+		sourceFile.getDescendantsOfKind(SyntaxKind.GetAccessor),
+		sourceFile.getDescendantsOfKind(SyntaxKind.MethodDeclaration),
+		sourceFile.getDescendantsOfKind(SyntaxKind.FunctionDeclaration)
 	);
 }
 
@@ -249,22 +256,29 @@ function getJsDocElements(nameableFunctions: NameableFunction[]): jsDocElement[]
 	return jsDocElements.length > 0 ? jsDocElements : undefined;
 }
 
-function getJsDocs(nameableFunction: NameableFunction, jsdocs: JSDoc[] | undefined, jsDocElements: jsDocElement[]) {
+function getJsDocs(fn: NameableFunction, jsdocs: JSDoc[] | undefined, jsDocElements: jsDocElement[]) {
 	jsdocs?.forEach((jsDoc: JSDoc, i: number) => {
 		const tags = jsDoc.getTags();
 		const element = new jsDocElement();
 		element.description = jsDoc.getDescription();
 		element.className = undefined;
-		element.methodName = nameableFunction.getName();
+		element.methodName = fn instanceof ConstructorDeclaration ? "constructor" : fn.getName();
+		element.returnType = fn instanceof ConstructorDeclaration ? undefined : fn.getReturnType().getText();
 
-		if (nameableFunction instanceof SetAccessorDeclaration) {
+		if (fn instanceof ConstructorDeclaration) {
+			element.methodName = "constructor";
+			element.returnType = undefined;
+		} else {
+			element.methodName = fn.getName();
+			element.returnType = fn.getReturnType().getText();
+		}
+
+		if (fn instanceof SetAccessorDeclaration) {
 			element.isSetAccessor = true;
 		}
-		if (nameableFunction instanceof GetAccessorDeclaration) {
+		if (fn instanceof GetAccessorDeclaration) {
 			element.isGetAccessor = true;
 		}
-
-		element.returnType = nameableFunction.getReturnType().getText();
 
 		for (let i = 0; i < tags?.length; i++) {
 			const tag = tags[i];
@@ -297,10 +311,13 @@ function getJsDocs(nameableFunction: NameableFunction, jsdocs: JSDoc[] | undefin
 				tagElement.paramName = paramTag.getName();
 				tagElement.paramType = paramTag.getTypeExpression()?.getTypeNode()?.getText();
 
+				if (tagElement.paramName === "stringParam") {
+					const i = 0;
+				}
+
 				// TODO: find the right ts-morph way to get this
 				if (tagElement.paramType?.startsWith("?")) {
 					tagElement.isParamTypeOptional = true;
-					// tagElement.paramName += "?";
 					tagElement.paramType = tagElement.paramType.replace("?", "");
 				}
 

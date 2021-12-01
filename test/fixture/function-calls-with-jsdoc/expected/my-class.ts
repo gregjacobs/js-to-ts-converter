@@ -11,7 +11,14 @@ export class Test {
 	public _weight: number;
 	public _isBright: boolean;
 
-	constructor() {
+	/**
+	 * Test class - Test constructor
+	 * @constructor
+	 *
+	 * @param {string | undefined} stringParam - string union Param - from constructor
+	 * @param {?number} numberParam - number optional Param - from constructor
+	 */
+	constructor(stringParam: string | undefined, numberParam?: number) {
 		this._weight = 0;
 		this._isBright = false;
 	}

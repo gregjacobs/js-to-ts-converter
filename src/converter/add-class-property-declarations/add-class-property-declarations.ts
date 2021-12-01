@@ -208,7 +208,6 @@ function getJsDocElements(classDecl: ClassDeclaration | undefined): jsDocElement
 					// TODO: find the right ts-morph way to get this
 					if (tagElement.paramType?.startsWith("?")) {
 						tagElement.isParamTypeOptional = true;
-						// tagElement.paramName += "?";
 						tagElement.paramType = tagElement.paramType.replace("?", "");
 					}
 

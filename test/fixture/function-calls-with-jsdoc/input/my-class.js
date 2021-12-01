@@ -8,7 +8,14 @@
  * @param {boolean} _isBright - _isBright - from class
  */
 export class Test {
-	constructor() {
+	/**
+	 * Test class - Test constructor
+	 * @constructor
+	 *
+	 * @param {string | undefined} stringParam - string union Param - from constructor
+	 * @param {?number} numberParam - number optional Param - from constructor
+	 */
+	constructor(stringParam, numberParam) {
 		this._weight = 0;
 		this._isBright = false;
 	}
