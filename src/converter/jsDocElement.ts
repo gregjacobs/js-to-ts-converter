@@ -58,6 +58,11 @@ export class jsDocElement {
 	public isParam?: boolean;
 
 	/**
+	 * is Param.
+	 */
+	public isParamPrivate?: boolean;
+
+	/**
 	 * param Name.
 	 */
 	public paramName?: string;

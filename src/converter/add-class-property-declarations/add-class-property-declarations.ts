@@ -72,7 +72,7 @@ export function addClassPropertyDeclarations(tsAstProject: Project): Project {
 			return {
 				name: types?.tsIsOptional ? types?.tsName + "?" : types?.tsName,
 				type: types?.tsType,
-				scope: Scope.Public,
+				scope: types?.tsIsPrivate ? Scope.Private : Scope.Public,
 			} as PropertyDeclarationStructure;
 		});
 
@@ -105,6 +105,7 @@ function getTypesFromComment(
 ): {
 	tsName: string;
 	tsType: string;
+	tsIsPrivate: boolean;
 	tsIsOptional: boolean;
 	tsIsUnion: boolean;
 	tsDefault: string;
@@ -114,6 +115,7 @@ function getTypesFromComment(
 } {
 	let tsName = propertyName;
 	let tsType = "any";
+	let tsIsPrivate = false;
 	let tsIsOptional = false;
 	let tsIsUnion = false;
 	let tsDefault = "";
@@ -162,7 +164,7 @@ function getTypesFromComment(
 			}
 		});
 	});
-	return { tsName, tsType, tsIsOptional, tsIsUnion, tsDefault, commentText, oaType, oaFormat };
+	return { tsName, tsType, tsIsPrivate, tsIsOptional, tsIsUnion, tsDefault, commentText, oaType, oaFormat };
 }
 
 function getJsDocElements(classDecl: ClassDeclaration | undefined): jsDocElement[] | undefined {
@@ -221,24 +223,29 @@ function getJsDocElements(classDecl: ClassDeclaration | undefined): jsDocElement
 						tagElement.paramType = tagElement.paramType.replace("{", "").replace("}", "");
 						tagElement.paramName = paramNameAndTypeArray[1];
 					}
-					const i = 0;
 				} else if (tag instanceof JSDocParameterTag || tag instanceof JSDocPropertyTag) {
 					tagElement.isParam = true;
 					const paramTag = tag as JSDocParameterTag;
 					tagElement.paramName = paramTag.getName();
 					tagElement.paramType = paramTag.getTypeExpression()?.getTypeNode()?.getText();
-
-					// TODO: find the right ts-morph way to get this
-					if (tagElement.paramType?.startsWith("?")) {
-						tagElement.isParamTypeOptional = true;
-						tagElement.paramType = tagElement.paramType.replace("?", "");
-					}
-
-					// TODO: find the right ts-morph way to get this
-					if (tagElement.paramType?.includes("|")) {
-						tagElement.isParamTypeUnion = true;
-					}
 				}
+
+				// TODO: find the right ts-morph way to get this
+				if (tagElement.paramType?.startsWith("?")) {
+					tagElement.isParamTypeOptional = true;
+					tagElement.paramType = tagElement.paramType.replace("?", "");
+				}
+
+				// TODO: find the right ts-morph way to get this
+				if (tagElement.paramType?.includes("|")) {
+					tagElement.isParamTypeUnion = true;
+				}
+
+				// Set scope (public/private)
+				if (tagElement.paramName?.startsWith("_")) {
+					tagElement.isParamPrivate = true;
+				}
+
 				jsDocElements.push(tagElement);
 			});
 
@@ -256,6 +263,7 @@ function getTypes(
 ): {
 	tsName: string | undefined;
 	tsType: string | undefined;
+	tsIsPrivate: boolean | undefined;
 	tsIsOptional: boolean | undefined;
 	tsIsUnion: boolean | undefined;
 	tsDefault: string;
@@ -267,6 +275,7 @@ function getTypes(
 		const jsDocElement = getPropertyType(propertyName, jsDocElements);
 		let tsName = jsDocElement?.paramName;
 		let tsType = jsDocElement?.paramType;
+		let tsIsPrivate = jsDocElement?.isParamPrivate;
 		let tsIsOptional = jsDocElement?.isParamTypeOptional;
 		let tsIsUnion = jsDocElement?.isParamTypeUnion;
 		let tsDefault = "";
@@ -274,7 +283,7 @@ function getTypes(
 		let oaType = undefined;
 		let oaFormat = undefined;
 
-		return { tsName, tsType, tsIsOptional, tsIsUnion, tsDefault, commentText, oaType, oaFormat };
+		return { tsName, tsType, tsIsPrivate, tsIsOptional, tsIsUnion, tsDefault, commentText, oaType, oaFormat };
 	} else {
 		return getTypesFromComment(propertyName, classDeclaration);
 	}

@@ -4,10 +4,11 @@
  * @classdesc Test class description.
  * @public
  *
- * @param {?number} numberProp - number optional Prop - from class
- * @param {string | undefined} strProp - string union Prop - from class
- * @param {boolean} boolProp - boolean Prop - from class
- * @param {Date} dateProp - Date Prop - from class
+ * @property {string} _privateProp - string private Prop - from constructor
+ * @property {?number} numberProp - number optional Prop - from class
+ * @property {string | undefined} strProp - string union Prop - from class
+ * @property {boolean} boolProp - boolean Prop - from class
+ * @property {Date} dateProp - Date Prop - from class
  */
 export class Test {
 	/**
@@ -21,6 +22,7 @@ export class Test {
 	 * @param {Date} dateProp - Date Prop - from constructor
 	 */
 	constructor(options = {}) {
+		this._privateProp = null;
 		this.numberProp = null;
 		this.strProp = null;
 		this.boolProp = null;

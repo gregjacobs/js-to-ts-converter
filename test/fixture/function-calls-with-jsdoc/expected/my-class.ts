@@ -8,8 +8,8 @@
  * @property {boolean} _isBright - _isBright - from class
  */
 export class Test {
-	public _weight: number;
-	public _isBright: boolean;
+	private _weight: number;
+	private _isBright: boolean;
 
 	/**
 	 * Test class - Test constructor
