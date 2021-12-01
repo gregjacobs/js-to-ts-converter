@@ -1,7 +1,27 @@
-import { Project, CallExpression, ClassDeclaration, ConstructorDeclaration, FunctionDeclaration, MethodDeclaration, NewExpression, Node, SourceFile, SyntaxKind } from "ts-morph";
+import {
+	Project,
+	CallExpression,
+	ClassDeclaration,
+	ConstructorDeclaration,
+	FunctionDeclaration,
+	MethodDeclaration,
+	SetAccessorDeclaration,
+	GetAccessorDeclaration,
+	NewExpression,
+	Node,
+	SourceFile,
+	SyntaxKind,
+	JSDocParameterTag,
+	JSDoc,
+	JSDocTag,
+	JSDocTypeTag,
+	ts,
+	ParameterDeclaration,
+} from "ts-morph";
 import logger from "../logger/logger";
+import { jsDocElement } from "./jsDocElement";
 
-type NameableFunction = FunctionDeclaration | MethodDeclaration;
+type NameableFunction = FunctionDeclaration | MethodDeclaration | SetAccessorDeclaration | GetAccessorDeclaration;
 type FunctionTransformTarget = NameableFunction | ConstructorDeclaration;
 
 /**
@@ -27,21 +47,20 @@ type FunctionTransformTarget = NameableFunction | ConstructorDeclaration;
  * Note: Just calling the language service to look up references takes a lot of
  * time. Might have to optimize this somehow in the future.
  */
-export function addOptionalsToFunctionParams( tsAstProject: Project ): Project {
-	logger.verbose( 'Beginning routine to mark function parameters as optional when calls exist that supply fewer args than parameters...' );
+export function addOptionalsToFunctionParams(tsAstProject: Project): Project {
+	logger.verbose("Beginning routine to mark function parameters as optional when calls exist that supply fewer args than parameters...");
 	const sourceFiles = tsAstProject.getSourceFiles();
 
-	logger.verbose( 'Parsing function/method/constructor calls from codebase.' );
-	const constructorMinArgsMap = parseClassConstructorCalls( sourceFiles );
-	const functionsMinArgsMap = parseFunctionAndMethodCalls( sourceFiles );
+	logger.verbose("Parsing function/method/constructor calls from codebase.");
+	const constructorMinArgsMap = parseClassConstructorCalls(sourceFiles);
+	const functionsMinArgsMap = parseFunctionAndMethodCalls(sourceFiles);
 
-	logger.verbose( 'Marking parameters as optional' );
-	addOptionals( constructorMinArgsMap );
-	addOptionals( functionsMinArgsMap );
+	logger.verbose("Marking parameters as optional");
+	addOptionals(constructorMinArgsMap);
+	addOptionals(functionsMinArgsMap);
 
 	return tsAstProject;
 }
-
 
 /**
  * Finds the call sites of each ClassDeclaration's constructor in order to
@@ -52,52 +71,48 @@ export function addOptionalsToFunctionParams( tsAstProject: Project ): Project {
  *
  * Actually marking the parameters as optional is done in a separate phase.
  */
-function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<ConstructorDeclaration, number> {
-	logger.verbose( 'Finding all calls to class constructors...' );
+function parseClassConstructorCalls(sourceFiles: SourceFile[]): Map<ConstructorDeclaration, number> {
+	logger.verbose("Finding all calls to class constructors...");
 	const constructorMinArgsMap = new Map<ConstructorDeclaration, number>();
 
-	sourceFiles.forEach( ( sourceFile: SourceFile ) => {
-		logger.verbose( `  Processing classes in source file: ${sourceFile.getFilePath()}` );
-		const classes = sourceFile.getDescendantsOfKind( SyntaxKind.ClassDeclaration );
+	sourceFiles.forEach((sourceFile: SourceFile) => {
+		logger.verbose(`  Processing classes in source file: ${sourceFile.getFilePath()}`);
+		const classes = sourceFile.getDescendantsOfKind(SyntaxKind.ClassDeclaration);
 
-		classes.forEach( ( classDeclaration: ClassDeclaration ) => {
+		classes.forEach((classDeclaration: ClassDeclaration) => {
 			const constructorFns = classDeclaration.getConstructors() || [];
-			const constructorFn = constructorFns.length > 0 ? constructorFns[ 0 ] : undefined;  // only grab the first since we're converting JavaScript
+			const constructorFn = constructorFns.length > 0 ? constructorFns[0] : undefined; // only grab the first since we're converting JavaScript
 
 			// If there is no constructor function for this class, then nothing to do
-			if( !constructorFn ) {
+			if (!constructorFn) {
 				return;
 			}
 
-			logger.verbose( `    Looking for calls to the constructor of class: '${classDeclaration.getName()}'` );
+			logger.verbose(`    Looking for calls to the constructor of class: '${classDeclaration.getName()}'`);
 
 			const constructorFnParams = constructorFn.getParameters();
 			const numParams = constructorFnParams.length;
 
 			const referencedNodes = classDeclaration.findReferencesAsNodes();
 
-			const callsToConstructor = referencedNodes
-				.map( ( node: Node ) => node.getFirstAncestorByKind( SyntaxKind.NewExpression ) )
-				.filter( ( node ): node is NewExpression => !!node );
+			const callsToConstructor = referencedNodes.map((node: Node) => node.getFirstAncestorByKind(SyntaxKind.NewExpression)).filter((node): node is NewExpression => !!node);
 
-			logger.debug( `    Found ${callsToConstructor.length} call(s) to the constructor` );
+			logger.debug(`    Found ${callsToConstructor.length} call(s) to the constructor`);
 
-			const minNumberOfCallArgs = callsToConstructor
-				.reduce( ( minCallArgs: number, call: NewExpression ) => {
-					return Math.min( minCallArgs, call.getArguments().length );
-				}, numParams );
+			const minNumberOfCallArgs = callsToConstructor.reduce((minCallArgs: number, call: NewExpression) => {
+				return Math.min(minCallArgs, call.getArguments().length);
+			}, numParams);
 
-			if( callsToConstructor.length > 0 ) {
-				logger.debug( `    Constructor currently expects ${numParams} params. Call(s) to the constructor supply a minimum of ${minNumberOfCallArgs} args.` );
+			if (callsToConstructor.length > 0) {
+				logger.debug(`    Constructor currently expects ${numParams} params. Call(s) to the constructor supply a minimum of ${minNumberOfCallArgs} args.`);
 			}
 
-			constructorMinArgsMap.set( constructorFn, minNumberOfCallArgs );
-		} );
-	} );
+			constructorMinArgsMap.set(constructorFn, minNumberOfCallArgs);
+		});
+	});
 
 	return constructorMinArgsMap;
 }
-
 
 /**
  * Finds the call sites of each FunctionDeclaration or MethodDeclaration in
@@ -108,58 +123,75 @@ function parseClassConstructorCalls( sourceFiles: SourceFile[] ): Map<Constructo
  *
  * Actually marking the parameters as optional is done in a separate phase.
  */
-function parseFunctionAndMethodCalls( sourceFiles: SourceFile[] ): Map<NameableFunction, number> {
-	logger.verbose( 'Finding all calls to functions/methods...' );
+function parseFunctionAndMethodCalls(sourceFiles: SourceFile[]): Map<NameableFunction, number> {
+	logger.verbose("Finding all calls to functions/methods...");
 	const functionsMinArgsMap = new Map<NameableFunction, number>();
 
-	sourceFiles.forEach( ( sourceFile: SourceFile ) => {
-		logger.verbose( `  Processing functions/methods in source file: ${sourceFile.getFilePath()}` );
-		const fns = getFunctionsAndMethods( sourceFile );
+	sourceFiles.forEach((sourceFile: SourceFile) => {
+		logger.verbose(`  Processing functions/methods in source file: ${sourceFile.getFilePath()}`);
+		const fns = getFunctionsAndMethods(sourceFile);
+		const jsDocElements: jsDocElement[] | undefined = getJsDocElements(fns);
 
-		fns.forEach( ( fn: NameableFunction ) => {
-			logger.verbose( `    Looking for calls to the function: '${fn.getName()}'` );
+		fns.forEach((fn: NameableFunction) => {
+			logger.verbose(`    Looking for calls to the function: '${fn.getName()}'`);
+
+			const fnName = fn.getName();
 			const fnParams = fn.getParameters();
 			const numParams = fnParams.length;
-
 			const referencedNodes = fn.findReferencesAsNodes();
+			const callsToFunction = referencedNodes.map((node: Node) => node.getFirstAncestorByKind(SyntaxKind.CallExpression)).filter((node): node is CallExpression => !!node);
+			const returnTypeJsDocElement = fn instanceof GetAccessorDeclaration ? getGetAccessorReturnType(fnName, jsDocElements) : fn instanceof SetAccessorDeclaration ? undefined : getReturnType(fnName, jsDocElements);
 
-			const callsToFunction = referencedNodes
-				.map( ( node: Node ) => node.getFirstAncestorByKind( SyntaxKind.CallExpression ) )
-				.filter( ( node ): node is CallExpression => !!node );
+			// Set Parameter types from JSDoc
+			fnParams.forEach((param: ParameterDeclaration) => {
+				let paramName = param.getName();
 
-			logger.debug( `    Found ${callsToFunction.length} call(s) to the function '${fn.getName()}'` );
+				if (fn instanceof SetAccessorDeclaration || fn instanceof GetAccessorDeclaration) {
+					paramName = "type";
+				}
 
-			const minNumberOfCallArgs = callsToFunction
-				.reduce( ( minCallArgs: number, call: CallExpression ) => {
-					return Math.min( minCallArgs, call.getArguments().length );
-				}, numParams );
+				const jsDocElement = getMethodParameterType(fnName, paramName, jsDocElements);
+				if (jsDocElement?.paramType) {
+					param.setType(jsDocElement?.paramType);
+				} else {
+					param.setType("any");
+				}
+			});
 
-			if( callsToFunction.length > 0 ) {
-				logger.debug( `    Function currently expects ${numParams} params. Call(s) to the function/method supply a minimum of ${minNumberOfCallArgs} args.` );
+			// Set method return type from JSDoc
+			if (returnTypeJsDocElement && returnTypeJsDocElement.returnType) {
+				fn.setReturnType(returnTypeJsDocElement.returnType);
 			}
 
-			functionsMinArgsMap.set( fn, minNumberOfCallArgs );
-		} );
-	} );
+			logger.debug(`    Found ${callsToFunction.length} call(s) to the function '${fn.getName()}'`);
+
+			const minNumberOfCallArgs = callsToFunction.reduce((minCallArgs: number, call: CallExpression) => {
+				return Math.min(minCallArgs, call.getArguments().length);
+			}, numParams);
+
+			if (callsToFunction.length > 0) {
+				logger.debug(`    Function currently expects ${numParams} params. Call(s) to the function/method supply a minimum of ${minNumberOfCallArgs} args.`);
+			}
+
+			functionsMinArgsMap.set(fn, minNumberOfCallArgs);
+		});
+	});
 
 	return functionsMinArgsMap;
 }
-
 
 /**
  * Retrieves all FunctionDeclarations and MethodDeclarations from the given
  * source file.
  */
-function getFunctionsAndMethods(
-	sourceFile: SourceFile
-): NameableFunction[] {
-	return ( [] as NameableFunction[] ).concat(
-		sourceFile.getDescendantsOfKind( SyntaxKind.FunctionDeclaration ),
-		sourceFile.getDescendantsOfKind( SyntaxKind.MethodDeclaration )
+function getFunctionsAndMethods(sourceFile: SourceFile): NameableFunction[] {
+	return ([] as NameableFunction[]).concat(
+		sourceFile.getDescendantsOfKind(SyntaxKind.FunctionDeclaration),
+		sourceFile.getDescendantsOfKind(SyntaxKind.MethodDeclaration),
+		sourceFile.getDescendantsOfKind(SyntaxKind.SetAccessor),
+		sourceFile.getDescendantsOfKind(SyntaxKind.GetAccessor)
 	);
 }
-
-
 
 /**
  * Marks parameters of class constructors / methods / functions as optional
@@ -184,23 +216,118 @@ function getFunctionsAndMethods(
  *
  *     function myFn( arg1?, arg2? ) {}   // <-- arg1 and arg2 marked as optional
  */
-function addOptionals( minArgsMap: Map<FunctionTransformTarget, number> ) {
+function addOptionals(minArgsMap: Map<FunctionTransformTarget, number>) {
 	const fns = minArgsMap.keys();
 
-	for( const fn of fns ) {
+	for (const fn of fns) {
 		const fnParams = fn.getParameters();
 
 		const numParams = fnParams.length;
-		const minNumberOfCallArgs = minArgsMap.get( fn )!;
+		const minNumberOfCallArgs = minArgsMap.get(fn)!;
 
 		// Mark all parameters greater than the minNumberOfCallArgs as
 		// optional (if it's not a rest parameter or already has a default value)
-		for( let i = minNumberOfCallArgs; i < numParams; i++ ) {
-			const param = fnParams[ i ];
+		for (let i = minNumberOfCallArgs; i < numParams; i++) {
+			const param = fnParams[i];
 
-			if( !param.isRestParameter() && !param.hasInitializer() ) {
-				param.setHasQuestionToken( true );
+			if (!param.isRestParameter() && !param.hasInitializer()) {
+				param.setHasQuestionToken(true);
 			}
 		}
 	}
+}
+
+function getJsDocElements(nameableFunctions: NameableFunction[]): jsDocElement[] | undefined {
+	const jsDocElements: jsDocElement[] = [];
+	let jsdocs: JSDoc[] | undefined;
+
+	nameableFunctions?.forEach((methodDeclaration) => {
+		jsdocs = methodDeclaration?.getJsDocs();
+		getJsDocs(methodDeclaration, jsdocs, jsDocElements);
+	});
+
+	return jsDocElements.length > 0 ? jsDocElements : undefined;
+}
+
+function getJsDocs(nameableFunction: NameableFunction, jsdocs: JSDoc[] | undefined, jsDocElements: jsDocElement[]) {
+	jsdocs?.forEach((jsDoc: JSDoc, i: number) => {
+		const tags = jsDoc.getTags();
+		const element = new jsDocElement();
+		element.description = jsDoc.getDescription();
+		element.className = undefined;
+		element.methodName = nameableFunction.getName();
+
+		if (nameableFunction instanceof SetAccessorDeclaration) {
+			element.isSetAccessor = true;
+		}
+		if (nameableFunction instanceof GetAccessorDeclaration) {
+			element.isGetAccessor = true;
+		}
+
+		element.returnType = nameableFunction.getReturnType().getText();
+
+		for (let i = 0; i < tags?.length; i++) {
+			const tag = tags[i];
+			const tagElement = new jsDocElement();
+			tagElement.methodName = element.methodName;
+			tagElement.isTag = true;
+			tagElement.tagName = tag.getTagName();
+			tagElement.tagcomment = tag.getCommentText();
+			tagElement.tagText = tag.getText();
+
+			if (tag instanceof JSDocTypeTag) {
+				const typeTag = tag as JSDocTypeTag;
+				const type = typeTag.getTypeExpression()?.getTypeNode()?.getText();
+
+				tagElement.paramName = tagElement.tagName;
+				if (element.isSetAccessor) {
+					tagElement.isSetAccessor = true;
+					tagElement.paramType = type;
+				}
+
+				if (element.isGetAccessor) {
+					tagElement.isGetAccessor = true;
+					tagElement.returnType = type;
+				}
+			}
+
+			if (tag instanceof JSDocParameterTag) {
+				tagElement.isParam = true;
+				const paramTag = tag as JSDocParameterTag;
+				tagElement.paramName = paramTag.getName();
+				tagElement.paramType = paramTag.getTypeExpression()?.getTypeNode()?.getText();
+
+				// TODO: find the right ts-morph way to get this
+				if (tagElement.paramType?.startsWith("?")) {
+					tagElement.isParamTypeOptional = true;
+					// tagElement.paramName += "?";
+					tagElement.paramType = tagElement.paramType.replace("?", "");
+				}
+
+				// TODO: find the right ts-morph way to get this
+				if (tagElement.paramType?.includes("|")) {
+					tagElement.isParamTypeUnion = true;
+				}
+			}
+			jsDocElements.push(tagElement);
+		}
+
+		jsDocElements.push(element);
+	});
+}
+
+function getClassParameterType(className: string, propertyName: string, jsDocElements: jsDocElement[] | undefined): jsDocElement | undefined {
+	return jsDocElements?.find((item) => item.paramName === propertyName && item.className === className);
+}
+
+function getMethodParameterType(methodName: string | undefined, propertyName: string, jsDocElements: jsDocElement[] | undefined): jsDocElement | undefined {
+	return jsDocElements?.find((item) => item.paramName === propertyName && item.methodName === methodName);
+}
+
+function getReturnType(methodName: string | undefined, jsDocElements: jsDocElement[] | undefined): jsDocElement | undefined {
+	return jsDocElements?.find((item) => item.methodName === methodName && item.returnType !== undefined);
+}
+
+function getGetAccessorReturnType(methodName: string | undefined, jsDocElements: jsDocElement[] | undefined): jsDocElement | undefined {
+	return jsDocElements?.find((item) => item.methodName === methodName && item.isGetAccessor && item.returnType !== undefined);
 }

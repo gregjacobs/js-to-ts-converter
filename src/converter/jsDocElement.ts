@@ -13,6 +13,21 @@ export class jsDocElement {
 	public methodName?: string;
 
 	/**
+	 * is Set Accessor.
+	 */
+	public isSetAccessor?: boolean;
+
+	/**
+	 * is Get Accessor.
+	 */
+	public isGetAccessor?: boolean;
+
+	/**
+	 * The returnType of the method.
+	 */
+	public returnType?: string;
+
+	/**
 	 * The description of the item (class, constructor, method).
 	 */
 	public description?: string;

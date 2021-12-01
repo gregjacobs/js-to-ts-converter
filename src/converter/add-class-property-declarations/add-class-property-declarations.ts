@@ -1,8 +1,8 @@
-import { Project, ClassInstancePropertyTypes, ClassDeclaration, PropertyDeclarationStructure, Scope, JSDocParameterTag, JSDoc, JSDocTag, ts, Node } from "ts-morph";
+import { Project, ClassInstancePropertyTypes, ClassDeclaration, PropertyDeclarationStructure, Scope, JSDocParameterTag, JSDoc, JSDocTag, ts } from "ts-morph";
 import { parseJsClasses } from "./parse-js-classes";
 import { correctJsProperties } from "./correct-js-properties";
 import logger from "../../logger/logger";
-import { jsDocElement } from "./jsDocElement";
+import { jsDocElement } from "../jsDocElement";
 
 /**
  * Parses all source files looking for ES6 classes, and takes any `this`

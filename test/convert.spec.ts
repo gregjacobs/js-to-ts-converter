@@ -76,6 +76,10 @@ describe("convert()", () => {
 	it(`should convert JS classes with JSDoc to TS-compilable classes`, () => {
 		runTest(`${__dirname}/fixture/class-with-jsdoc`);
 	});
+
+	it(`should add function parameter types from JSDoc`, () => {
+		runTest(`${__dirname}/fixture/function-calls-with-jsdoc`);
+	});
 });
 
 /**
