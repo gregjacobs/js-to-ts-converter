@@ -76,7 +76,10 @@ export function addClassPropertyDeclarations(tsAstProject: Project): Project {
 			} as PropertyDeclarationStructure;
 		});
 
-		logger.verbose(`    Adding property declarations for properties: '${undeclaredProperties.join("', '")}'`);
+		if (undeclaredProperties && undeclaredProperties.length > 0) {
+			logger.verbose(`    Adding property declarations for properties: '${undeclaredProperties.join("', '")}'`);
+		}
+
 		classDeclaration.insertProperties(0, propertyDeclarations);
 
 		// logger.verbose(`    Setting property defaults for properties: '${undeclaredProperties.join("', '")}'`);
