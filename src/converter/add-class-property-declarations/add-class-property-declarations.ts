@@ -190,6 +190,7 @@ function getJsDocElements(classDecl: ClassDeclaration | undefined): jsDocElement
 		jsdocs?.forEach((jsDoc: JSDoc, i: number) => {
 			const tags = jsDoc.getTags();
 			const element = new jsDocElement();
+      
 			element.description = jsDoc.getDescription();
 			element.className = classDecl?.getName();
 
@@ -205,57 +206,21 @@ function getJsDocElements(classDecl: ClassDeclaration | undefined): jsDocElement
 				tagElement.tagText = tag.getText();
 
 				if (tag instanceof JSDocUnknownTag && tagElement.tagName == "property") {
-					tagElement.isParam = true;
-					const propertyTag = tag as JSDocUnknownTag;
-
-					// TODO: get @property name, type comment the ts-morph way
-					let paramNameAndType = tagElement.tagcomment;
-					const commentLen = tagElement.tagcomment?.length!;
-					let commentPos = tagElement.tagcomment?.indexOf(" - ")!;
-
-					if (commentPos > 0) {
-						paramNameAndType = paramNameAndType?.substring(0, commentPos);
-						tagElement.tagcomment = tagElement.tagcomment?.substring(commentPos);
-					}
-
-					// Split paramNameAndType to Name, Type: {string} strProperty
-					const paramNameAndTypeArray = paramNameAndType?.split(" ")!;
-
-					if (paramNameAndTypeArray?.length! > 0) {
-						tagElement.paramType = paramNameAndTypeArray[0];
-						tagElement.paramType = tagElement.paramType.replace("{", "").replace("}", "");
-						tagElement.paramName = paramNameAndTypeArray[1];
-					}
+					tagElement.setParamNameAndType(tagElement.tagcomment);
 				} else if (tag instanceof JSDocParameterTag || tag instanceof JSDocPropertyTag) {
-					tagElement.isParam = true;
 					const paramTag = tag as JSDocParameterTag;
+
+					tagElement.isParamBracketed = paramTag.isBracketed();
 					tagElement.paramName = paramTag.getName();
 					tagElement.paramType = paramTag.getTypeExpression()?.getTypeNode()?.getText();
 				}
-
-				// TODO: find the right ts-morph way to get this
-				if (tagElement.paramType?.startsWith("?")) {
-					tagElement.isParamTypeOptional = true;
-					tagElement.paramType = tagElement.paramType.replace("?", "");
+				if (tagElement.isParam) {
+					jsDocElements.push(tagElement);
 				}
-
-				// TODO: find the right ts-morph way to get this
-				if (tagElement.paramType?.includes("|")) {
-					tagElement.isParamTypeUnion = true;
-				}
-
-				// Set scope (public/private)
-				if (tagElement.paramName?.startsWith("_")) {
-					tagElement.isParamPrivate = true;
-				}
-
-				jsDocElements.push(tagElement);
 			});
-
 			jsDocElements.push(element);
 		});
 	}
-
 	return jsDocElements.length > 0 ? jsDocElements : undefined;
 }
 

@@ -283,6 +283,7 @@ function getJsDocs(fn: NameableFunction, jsdocs: JSDoc[] | undefined, jsDocEleme
 		for (let i = 0; i < tags?.length; i++) {
 			const tag = tags[i];
 			const tagElement = new jsDocElement();
+      
 			tagElement.methodName = element.methodName;
 			tagElement.isTag = true;
 			tagElement.tagName = tag.getTagName();
@@ -306,25 +307,16 @@ function getJsDocs(fn: NameableFunction, jsdocs: JSDoc[] | undefined, jsDocEleme
 			}
 
 			if (tag instanceof JSDocParameterTag) {
-				tagElement.isParam = true;
 				const paramTag = tag as JSDocParameterTag;
+
+				tagElement.isParamBracketed = paramTag.isBracketed();
 				tagElement.paramName = paramTag.getName();
 				tagElement.paramType = paramTag.getTypeExpression()?.getTypeNode()?.getText();
-
-				// TODO: find the right ts-morph way to get this
-				if (tagElement.paramType?.startsWith("?")) {
-					tagElement.isParamTypeOptional = true;
-					tagElement.paramType = tagElement.paramType.replace("?", "");
-				}
-
-				// TODO: find the right ts-morph way to get this
-				if (tagElement.paramType?.includes("|")) {
-					tagElement.isParamTypeUnion = true;
-				}
 			}
-			jsDocElements.push(tagElement);
+			if (tagElement.isParam) {
+				jsDocElements.push(tagElement);
+			}
 		}
-
 		jsDocElements.push(element);
 	});
 }

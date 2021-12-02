@@ -35,6 +35,7 @@
 		"jsdoc-parse": "^6.0.1",
 		"jsdoc-to-markdown": "^7.1.0",
 		"lodash": "^4.17.21",
+		"os": "^0.1.2",
 		"resolve": "^1.20.0",
 		"trace-error": "^1.0.3",
 		"ts-morph": "^12.2.0",

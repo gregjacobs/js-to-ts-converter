@@ -14,8 +14,12 @@ export class Test {
 	 *
 	 * @param {string | undefined} stringParam - string union Param - from constructor
 	 * @param {?number} numberParam - number optional Param - from constructor
+	 * @param {Object} [options={}] - Options.
+	 * @param {boolean} [options.optionsParam=true] - optionsParam. For info only. Should be excluded from the parameter list.
+	 * @param {Array.<string>} [stringListParam=[]] - Array of strings.
+	 * @param {number[]} [numberListParam=[]] - Array of numbers.
 	 */
-	constructor(stringParam, numberParam) {
+	constructor(stringParam, numberParam, options = {}, stringListParam = [], numberListParam = []) {
 		this._weight = 0;
 		this._isBright = false;
 	}
