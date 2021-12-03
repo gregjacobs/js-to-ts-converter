@@ -181,6 +181,15 @@ export class jsDocElement {
 		if (paramType?.includes("Array.<")) {
 			paramType = paramType.replace("Array.<", "").replace(">", "") + "[]";
 		}
+
+		// Array.<Array.<string>> -> string[][]
+		if (paramType?.includes("Array.<Array.<")) {
+			paramType = paramType.replace("Array.<Array.<", "").replace(">>", "") + "[][]";
+		}
+
+		// Replace Param Types
+		paramType = paramType?.replace("Object", "any").replace("Function", "any");
+
 		return paramType;
 	}
 }
