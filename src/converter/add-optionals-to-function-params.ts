@@ -154,11 +154,12 @@ function parseFunctionAndMethodCalls(sourceFiles: SourceFile[]): Map<NameableFun
 				// Is it Destructuring assignment and setting function parameters default value - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
 				const type = param.getType();
 				const bindingElements = param.getDescendantsOfKind(SyntaxKind.BindingElement);
+				const paramText = param.getText();
 				const paramType = type.getText();
 				let paramName = param.getName();
 
 				// Which parameter is it?
-				//   function smartFunctionParameters(value, { p1 = "P1", p2 = 100, p3 = { p21: "P21", p22: { p31: "P31" } } } = {}) {}
+				//   function smartFunctionParameters(value, { p1 = "P1", p2 = 12, p3 = { p21: "P21", p22: { p31: "P31" } } } = {}) {}
 				if (bindingElements.length == 0) {
 					// Regular parameter: value
 					if (fn instanceof SetAccessorDeclaration || fn instanceof GetAccessorDeclaration) {
@@ -179,7 +180,7 @@ function parseFunctionAndMethodCalls(sourceFiles: SourceFile[]): Map<NameableFun
 					}
 				} else {
 					// Smart function parameters - https://javascript.info/destructuring-assignment#smart-function-parameters
-					//   { p1 = "P1", p2 = 100, p3 = { p21: "P21", p22: { p31: "P31" } } }
+					//   { p1 = "P1", p2 = 12, p3 = { p21: "P21", p22: { p31: "P31" } } }
 					// TODO: make walkParameterTree() work
 
 					// Save parameter fix to be applied at the end
@@ -362,7 +363,7 @@ function getGetAccessorReturnType(methodName: string | undefined, jsDocElements:
 
 function walkParameterTree(bindingElements: BindingElement[], parameterElements: parameterElement[]) {
 	// Smart function parameters - https://javascript.info/destructuring-assignment#smart-function-parameters
-	//   { p1 = "P1", p2 = 100, p3 = { p21: "P21", p22: { p31: "P31" } } }
+	//   { p1 = "P1", p2 = 12, p3 = { p21: "P21", p22: { p31: "P31" } } }
 	bindingElements.forEach((param) => {
 		const parameterElt = new parameterElement(param.getName(), param.getType()?.getText(), param.getInitializer()?.getText());
 		const nextBindingElements = param.getDescendantsOfKind(SyntaxKind.BindingElement);
