@@ -13,16 +13,19 @@ import {
 	SyntaxKind,
 	JSDocParameterTag,
 	JSDoc,
-	JSDocTag,
 	JSDocTypeTag,
-	ts,
 	ParameterDeclaration,
+	BindingElement,
 } from "ts-morph";
 import logger from "../logger/logger";
 import { jsDocElement } from "./jsDocElement";
+import { parameterElement } from "./parameterElement";
+import { parameterFix } from "./parameterFix";
 
 type NameableFunction = ConstructorDeclaration | SetAccessorDeclaration | GetAccessorDeclaration | MethodDeclaration | FunctionDeclaration;
 type FunctionTransformTarget = NameableFunction | ConstructorDeclaration;
+
+const parameterFixes: parameterFix[] = [];
 
 /**
  * Adds the question token to function/method/constructor parameters that are
@@ -58,6 +61,9 @@ export function addOptionalsToFunctionParams(tsAstProject: Project): Project {
 	logger.verbose("Marking parameters as optional");
 	addOptionals(constructorMinArgsMap);
 	addOptionals(functionsMinArgsMap);
+
+	//sourceFiles[0].insertText(110, ": { p1?: string | undefined; p2?: number | undefined; p3?: { p21: string; p22: { p31: string } } | undefined }");
+	parameterFix.insert(parameterFixes);
 
 	return tsAstProject;
 }
@@ -131,6 +137,7 @@ function parseFunctionAndMethodCalls(sourceFiles: SourceFile[]): Map<NameableFun
 		logger.verbose(`  Processing functions/methods in source file: ${sourceFile.getFilePath()}`);
 		const fns = getFunctionsAndMethods(sourceFile);
 		const jsDocElements: jsDocElement[] | undefined = getJsDocElements(fns);
+		const parameterElements: parameterElement[] = [];
 
 		fns.forEach((fn: NameableFunction) => {
 			const fnName = fn instanceof ConstructorDeclaration ? "constructor" : fn.getName();
@@ -143,24 +150,40 @@ function parseFunctionAndMethodCalls(sourceFiles: SourceFile[]): Map<NameableFun
 			const callsToFunction = referencedNodes.map((node: Node) => node.getFirstAncestorByKind(SyntaxKind.CallExpression)).filter((node): node is CallExpression => !!node);
 			const returnTypeJsDocElement = fn instanceof GetAccessorDeclaration ? getGetAccessorReturnType(fnName, jsDocElements) : fn instanceof SetAccessorDeclaration ? undefined : getReturnType(fnName, jsDocElements);
 
-			// Set Parameter types from JSDoc
 			fnParams.forEach((param: ParameterDeclaration) => {
+				// Is it Destructuring assignment and setting function parameters default value - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
+				const type = param.getType();
+				const bindingElements = param.getDescendantsOfKind(SyntaxKind.BindingElement);
+				const paramType = type.getText();
 				let paramName = param.getName();
 
-				if (fn instanceof SetAccessorDeclaration || fn instanceof GetAccessorDeclaration) {
-					paramName = "type";
-				}
+				// Which parameter is it?
+				//   function smartFunctionParameters(value, { p1 = "P1", p2 = 100, p3 = { p21: "P21", p22: { p31: "P31" } } } = {}) {}
+				if (bindingElements.length == 0) {
+					// Regular parameter: value
+					if (fn instanceof SetAccessorDeclaration || fn instanceof GetAccessorDeclaration) {
+						paramName = "type";
+					}
 
-				const jsDocElement = getMethodParameterType(fnName, paramName, jsDocElements);
+					// Set Parameter types from JSDoc
+					const jsDocElement = getMethodParameterType(fnName, paramName, jsDocElements);
 
-				if (jsDocElement?.isParamTypeOptional) {
-					param.setHasQuestionToken(true);
-				}
+					if (jsDocElement?.isParamTypeOptional) {
+						param.setHasQuestionToken(true);
+					}
 
-				if (jsDocElement?.paramType) {
-					param.setType(jsDocElement?.paramType);
+					if (jsDocElement?.paramType) {
+						param.setType(jsDocElement?.paramType);
+					} else {
+						param.setType(paramType);
+					}
 				} else {
-					param.setType("any");
+					// Smart function parameters - https://javascript.info/destructuring-assignment#smart-function-parameters
+					//   { p1 = "P1", p2 = 100, p3 = { p21: "P21", p22: { p31: "P31" } } }
+					// TODO: make walkParameterTree() work
+
+					// Save parameter fix to be applied at the end
+					parameterFixes.push(new parameterFix(sourceFile, param, type.getText()));
 				}
 			});
 
@@ -283,7 +306,7 @@ function getJsDocs(fn: NameableFunction, jsdocs: JSDoc[] | undefined, jsDocEleme
 		for (let i = 0; i < tags?.length; i++) {
 			const tag = tags[i];
 			const tagElement = new jsDocElement();
-      
+
 			tagElement.methodName = element.methodName;
 			tagElement.isTag = true;
 			tagElement.tagName = tag.getTagName();
@@ -335,4 +358,35 @@ function getReturnType(methodName: string | undefined, jsDocElements: jsDocEleme
 
 function getGetAccessorReturnType(methodName: string | undefined, jsDocElements: jsDocElement[] | undefined): jsDocElement | undefined {
 	return jsDocElements?.find((item) => item.methodName === methodName && item.isGetAccessor && item.returnType !== undefined);
+}
+
+function walkParameterTree(bindingElements: BindingElement[], parameterElements: parameterElement[]) {
+	// Smart function parameters - https://javascript.info/destructuring-assignment#smart-function-parameters
+	//   { p1 = "P1", p2 = 100, p3 = { p21: "P21", p22: { p31: "P31" } } }
+	bindingElements.forEach((param) => {
+		const parameterElt = new parameterElement(param.getName(), param.getType()?.getText(), param.getInitializer()?.getText());
+		const nextBindingElements = param.getDescendantsOfKind(SyntaxKind.BindingElement);
+		const type = param.getType();
+		const compilerType = type.compilerType;
+		const paramProperties = compilerType.getProperties();
+
+		if (paramProperties.length > 0 && paramProperties.length < 6) {
+			paramProperties.forEach((param) => {
+				const n = param.getName();
+				const d = param.getDeclarations();
+
+				if (d?.length! > 0) {
+					d?.forEach((dec) => {
+						// TODO: Get name, type, initializer
+					});
+				}
+			});
+		}
+
+		if (nextBindingElements.length > 0) {
+			parameterElt.children = walkParameterTree(nextBindingElements, parameterElements);
+		}
+		parameterElements.push(parameterElt);
+	});
+	return parameterElements;
 }

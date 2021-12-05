@@ -27,7 +27,7 @@ export class Test {
 	 * @param {boolean} boolProp - boolean Prop - from constructor
 	 * @param {Date} dateProp - Date Prop - from constructor
 	 */
-	constructor(options: Object = {}) {
+	constructor(options: any = {}) {
 		this._privateProp = null;
 		this.numberProp = null;
 		this.strProp = null;

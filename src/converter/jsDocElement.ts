@@ -193,7 +193,7 @@ export class jsDocElement {
 		}
 
 		// Replace Param Types
-		paramType = paramType?.replace("Object", "any").replace("Function", "any");
+		paramType = paramType?.replace("Object", "any").replace("...Function", "any[]").replace("Function", "any");
 
 		return paramType;
 	}

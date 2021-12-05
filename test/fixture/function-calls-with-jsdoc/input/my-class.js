@@ -19,7 +19,7 @@ export class Test {
 	 * @param {Array.<string>} [stringListParam=[]] - Array of strings.
 	 * @param {number[]} [numberListParam=[]] - Array of numbers.
 	 */
-	constructor(stringParam, numberParam, options = {}, stringListParam = [], numberListParam = []) {
+	constructor(stringParam, numberParam, options = {}, stringListParam = [], numberListParam = [], { param = {} } = {}) {
 		this._weight = 0;
 		this._isBright = false;
 	}
@@ -41,10 +41,6 @@ export class Test {
 	get weight() {
 		return this._weight;
 	}
-
-	// TODO:
-	// @returns {Deferred}
-	// @param {Function=} alterFn - The alter function.
 
 	/**
 	 * Updates the weight.
@@ -90,6 +86,10 @@ export class Test {
 	simpleParamsWithReturn(strParam, numParam) {
 		return [strParam, numParam.toString()];
 	}
+
+	smartMethodParameters(value, { p1 = "P1", p2 = 100, p3 = { p21: "P21", p22: { p31: "P31" } } } = {}) {
+		alert(`${p1} ${p2} ${p3}`);
+	}
 }
 
 /**
@@ -102,6 +102,10 @@ export class Test {
  */
 function addToWeight(weight, seconds = 0) {
 	return weight + seconds + 2;
+}
+
+function smartFunctionParameters(value, { p1 = "P1", p2 = 100, p3 = { p21: "P21", p22: { p31: "P31" } } } = {}) {
+	alert(`${p1} ${p2} ${p3}`);
 }
 
 // TypeScript AST Viewer - https://ts-ast-viewer.com

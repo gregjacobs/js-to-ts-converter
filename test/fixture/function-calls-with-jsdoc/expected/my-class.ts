@@ -22,7 +22,7 @@ export class Test {
 	 * @param {Array.<string>} [stringListParam=[]] - Array of strings.
 	 * @param {number[]} [numberListParam=[]] - Array of numbers.
 	 */
-	constructor(stringParam: string | undefined, numberParam?: number, options: Object = {}, stringListParam: string[] = [], numberListParam: number[] = []) {
+	constructor(stringParam: string | undefined, numberParam?: number, options: any = {}, stringListParam: string[] = [], numberListParam: number[] = [], { param = {} }: { param?: {} | undefined } = {}) {
 		this._weight = 0;
 		this._isBright = false;
 	}
@@ -44,10 +44,6 @@ export class Test {
 	get weight(): number {
 		return this._weight;
 	}
-
-	// TODO:
-	// @returns {Deferred}
-	// @param {Function=} alterFn - The alter function.
 
 	/**
 	 * Updates the weight.
@@ -93,6 +89,10 @@ export class Test {
 	simpleParamsWithReturn(strParam: string, numParam: number): string[] {
 		return [strParam, numParam.toString()];
 	}
+
+	smartMethodParameters(value: any, { p1 = "P1", p2 = 100, p3 = { p21: "P21", p22: { p31: "P31" } } }: { p1?: string | undefined; p2?: number | undefined; p3?: { p21: string; p22: { p31: string } } | undefined } = {}) {
+		alert(`${p1} ${p2} ${p3}`);
+	}
 }
 
 /**
@@ -105,6 +105,10 @@ export class Test {
  */
 function addToWeight(weight: number, seconds: number = 0): number {
 	return weight + seconds + 2;
+}
+
+function smartFunctionParameters(value: any, { p1 = "P1", p2 = 100, p3 = { p21: "P21", p22: { p31: "P31" } } }: { p1?: string | undefined; p2?: number | undefined; p3?: { p21: string; p22: { p31: string } } | undefined } = {}) {
+	alert(`${p1} ${p2} ${p3}`);
 }
 
 // TypeScript AST Viewer - https://ts-ast-viewer.com
