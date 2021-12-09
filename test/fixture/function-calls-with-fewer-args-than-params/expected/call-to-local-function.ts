@@ -1,5 +1,3 @@
-function threeArg( arg1, arg2?, arg3? ) {
+function threeArg(arg1: any, arg2?: any, arg3?: any) {}
 
-}
-
-threeArg( 1 );
+threeArg(1);
