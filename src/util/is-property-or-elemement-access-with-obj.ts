@@ -1,4 +1,4 @@
-import { ElementAccessExpression, Identifier, Node, PropertyAccessExpression, TypeGuards } from "ts-morph";
+import { ElementAccessExpression, Node, PropertyAccessExpression } from "ts-morph";
 import { isPropertyAccessWithObj } from "./is-property-access-with-obj";
 import { isElementAccessWithObj } from "./is-element-access-with-obj";
 

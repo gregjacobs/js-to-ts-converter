@@ -1,4 +1,4 @@
-import { ElementAccessExpression, Identifier, Node, TypeGuards } from "ts-morph";
+import { ElementAccessExpression, Identifier, Node } from "ts-morph";
 
 /**
  * Determines if the given `node` is a ElementAccessExpression whose object is
@@ -16,16 +16,16 @@ export function isElementAccessWithObj(
 	node: Node,
 	objIdentifier: string
 ): node is ElementAccessExpression {
-	if( !TypeGuards.isElementAccessExpression( node ) ) {
+	if( !Node.isElementAccessExpression( node ) ) {
 		return false;
 	}
 
 	const expr = node.getExpression();
 
 	if( objIdentifier === 'this' ) {
-		return TypeGuards.isThisExpression( expr );
+		return Node.isThisExpression( expr );
 
-	} else if( TypeGuards.isIdentifier( expr ) ) {
+	} else if( Node.isIdentifier( expr ) ) {
 		const identifier = expr as Identifier;
 
 		return identifier.getText() === objIdentifier;

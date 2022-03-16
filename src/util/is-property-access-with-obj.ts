@@ -1,4 +1,4 @@
-import { Identifier, Node, PropertyAccessExpression, TypeGuards } from "ts-morph";
+import { Identifier, Node, PropertyAccessExpression } from "ts-morph";
 
 /**
  * Determines if the given `node` is a PropertyAccessExpression or
@@ -16,16 +16,16 @@ export function isPropertyAccessWithObj(
 	node: Node,
 	objIdentifier: string
 ): node is PropertyAccessExpression {
-	if( !TypeGuards.isPropertyAccessExpression( node ) ) {
+	if( !Node.isPropertyAccessExpression( node ) ) {
 		return false;
 	}
 
 	const expr = node.getExpression();
 
 	if( objIdentifier === 'this' ) {
-		return TypeGuards.isThisExpression( expr );
+		return Node.isThisExpression( expr );
 
-	} else if( TypeGuards.isIdentifier( expr ) ) {
+	} else if( Node.isIdentifier( expr ) ) {
 		const identifier = expr as Identifier;
 
 		return identifier.getText() === objIdentifier;

@@ -1,4 +1,4 @@
-import { Node, SyntaxKind, TypeGuards, VariableDeclaration } from "ts-morph";
+import { Node, SyntaxKind, VariableDeclaration } from "ts-morph";
 
 /**
  * Determines if the given AST Node is a VariableDeclaration of the form:
@@ -12,7 +12,7 @@ import { Node, SyntaxKind, TypeGuards, VariableDeclaration } from "ts-morph";
  *     var { prop1, prop2 } = this;
  */
 export function isThisReferencingVar( node: Node ): node is VariableDeclaration {
-	if( !TypeGuards.isVariableDeclaration( node ) ) {
+	if( !Node.isVariableDeclaration( node ) ) {
 		return false;
 	}
 
